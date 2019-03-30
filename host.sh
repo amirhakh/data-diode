@@ -11,6 +11,7 @@
 
 # apt install docker.io docker-compose
 
+# install Docker
 sudo apt-get remove docker docker-engine docker.io containerd runc
 sudo apt-get install \
     apt-transport-https \
@@ -31,7 +32,8 @@ sudo chmod +x /usr/local/bin/docker-compose
 docker-compose build
 docker-compose up -d
 
-crontab -l | { cat ; echo -e "0 8 * * 6 docker-compose -f /$(pwd)/docker-compose.yml start\n0 20 * * 6 docker-compose -f /$(pwd)/docker-compose.yml stop" ; } | crontab -
+# start task on 8:00 AM except Friday
 crontab -l | { cat ; echo -e "0 8 * * * test $(date +'%a') -ne 5 && docker-compose -f /$(pwd)/docker-compose.yml start" ; } | crontab -
-crontab -l | { cat ; echo -e "0 20 * * * test $(date +'%a') -ne 5 && docker-compose -f /$(pwd)/docker-compose.yml stop" ; } | crontab -
+# stop task on 20:00 PM
+crontab -l | { cat ; echo -e "0 20 * * * docker-compose -f /$(pwd)/docker-compose.yml stop" ; } | crontab -
 

@@ -3,6 +3,11 @@ version: '3.7'
 volumes:
   migrate:
     name: migrate
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /mnt/hard/migrate_folder
 
 services:
   vmn:
@@ -37,10 +42,10 @@ services:
     volumes:
       - migrate:/migrate
     networks:
-      vlan1:
-        ipv4_address: 192.168.1.11
+      vlan2:
+        ipv4_address: 192.168.2.10
     environment: 
-      - smbip=192.168.1.1
+      - smbip=192.168.2.1
       - smbpath=test
       - user=test
       - password=test
@@ -58,3 +63,10 @@ networks:
     ipam:
       config:
         - subnet: 192.168.1.0/24
+  vlan2:
+    driver: macvlan
+    driver_opts:
+      parent: enp3s1
+    ipam:
+      config:
+        - subnet: 192.168.2.0/24
