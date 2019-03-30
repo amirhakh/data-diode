@@ -1,0 +1,60 @@
+version: '3.7'
+
+volumes:
+  migrate:
+    name: migrate
+
+services:
+  vmn:
+    build: ./input
+    # env_file: ./input/.env
+    # image: name:tag
+    container_name: inputd
+    init: true
+    privileged: true
+    restart: on-failure
+    volumes:
+      - migrate:/migrate
+    networks:
+      vlan1:
+        ipv4_address: 192.168.1.10
+    environment: 
+      - smbip=192.168.1.1
+      - smbpath=infolder
+      - user=input
+      - password=input
+    cap_add:
+      - SYS_ADMIN
+    deploy:
+      restart_policy:
+        condition: on-failure
+  vmo:
+    build: ./output
+    container_name: outputd
+    init: true
+    privileged: true
+    restart: on-failure
+    volumes:
+      - migrate:/migrate
+    networks:
+      vlan1:
+        ipv4_address: 192.168.1.11
+    environment: 
+      - smbip=192.168.1.1
+      - smbpath=test
+      - user=test
+      - password=test
+    cap_add:
+      - SYS_ADMIN
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+networks:
+  vlan1:
+    driver: macvlan
+    driver_opts:
+      parent: enp3s0
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24

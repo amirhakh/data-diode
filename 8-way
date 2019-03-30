@@ -1,0 +1,72 @@
+Type1 : Listing SMB shared folder through command prompt
+#smbclient –L ipadd –U username
+Here –L will specify listing of SMB share for the server with ipadd
+Or
+#smbclient //192.168.0.1/share1 –U username
+
+ 
+Example :
+#smbclient –L 192.168.0.1 –U root
+
+ 
+Type2 : Mounting SMB share on local folder by using smbmount command
+#smbmount //ipadd/sharename /mountpoint –o username=userid,workgroup=workgroupname
+ 
+Example :
+#smbmount //192.168.0.1/share1 /mnt –o username=steev,workgroup=test
+
+ 
+ 
+Type3 : Mounting SMB share by using mount command
+#mount –t smbfs ipadd:/sharename /mountpoint –o username=userid,workgroup=workgroupname
+Or
+#mount –t smbfs //ipadd/sharename /mountpoint –o username=userid,workgroup=workgroupname
+
+ 
+Example :
+#mount –t smbfs 192.168.0.1:/share1 /mnt –o username=surendra,workgroup=test
+
+ 
+Type4 : Mounting CIFS (Common Internet File System) is nothing but a advanced SMB file system implementation which support RAP (Remote Access Protocol)
+#mount –t cifs ipadd:/sharename /mountpoint –o username=userid,workgroup=workgroupname
+
+ 
+Example :
+#mount –t cifs 192.168.0.1:/share1 /test –o username=Surendra,workgroup=test
+
+ 
+Type5 : All the above commands will ask password to display/mount the share name, however we can specify the password in command it’self as below
+#mount -t smbfs -o username=userid,workgroup=workgroupname,password=XXXXX //ipadd/sharepoint /mountpoint/
+
+ 
+Example :
+#mount –t smbfs –o username=Surendra,workgroup=test,password=xylBJRS8 //192.168.0.1/share1 /test
+
+ 
+Type6 : Mounting permanently by editing /etc/fstab file, below is the fstab file entry example
+#vi /etc/fstab//192.168.0.1/share1 /test smbfs rw,user,username=surendra,password=xylBJRS8 0 0
+Save and exit the file and conform that you edited fstab file properly. By below commands
+#mount –a
+This command should not throw any error,
+#df –H
+This command should n style="font-size: small;"> show mount from 192.168.0.1 server
+
+ 
+Type7 : Mounting a share where user belongs to a domain permanently by editing /etc/fstab file
+The above command will not work properly for domain users so we have to specify domain as well when specifying username
+So now username will be changed to domainusername
+#vi /etc/fstab
+//192.168.0.1/share1 /mnt smbfs rw,user,username=testsurendra,password=xylBJRS8 0 0
+Save the file and exit then execute mount –a and df –H for just conformation if the mount is done successfully.
+
+ 
+Type8:As you people know /etc/fstab file is visible to all the users who logged in, so specifying user password in /etc/fstab file is not that much good procedure.. So there is a work around to resolve this issue, just create a credential file in users home directory and point that file in /etc/fstab file entry as mention below.
+#cd ~
+#echo username=surendra > .smbfile
+#echo password=xylBJRS8 >> .smbfile
+#chmod 600 .smbfile
+ 
+Then edit the /etc/fstab file and specify the entries as below
+#vi /etc/fstab
+//192.168.0.1/share1 /mnt smbfs credentials=/home/myhomedirectoryofuser/. smbfile,rw,user 0 0
+Save and exit the file and execute mount –a, df –H to check if you did any mistakes..
