@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# disable usb storage
+echo "blacklist usb_storage" >> /etc/modprobe.d/blacklist.conf
+echo "blacklist firewire-core" >> /etc/modprobe.d/firewire.conf
+echo "blacklist thunderbolt" >> /etc/modprobe.d/thunderbolt.conf
+# add "modprobe -r usb_storage" into /etc/rc.local before "exit 0"
+
+# enforcing selinux
+sudo sed -i 's/SELINUX=.*/SELINUX=enforcing/' /etc/selinux/config
+
+# kernel param
+echo "# config for hardening kernel
+kernel.exec-shield=1
+kernel.kptr_restrict = 1
+kernel.randomize_va_space=1
+
+net.ipv4.icmp_ignore_bogus_error_responses=1
+net.ipv4.icmp_echo_ignore_all = 1
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+net.ipv4.conf.all.rp_filter=1
+net.ipv4.conf.all.accept_source_route=0
+net.ipv4.icmp_ignore_bogus_error_messages=1
+net.ipv4.conf.all.log_martians = 1
+" >> /etc/sysctl.d/hardening.conf
+

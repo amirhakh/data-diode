@@ -18,7 +18,10 @@ sudo apt-get install \
     ca-certificates \
     curl \
     gnupg-agent \
-    software-properties-common
+    software-properties-common \
+    iptables-persistent \
+    selinux chkrootkit clamav clamav-daemon
+
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
@@ -37,3 +40,4 @@ crontab -l | { cat ; echo -e "0 8 * * * test $(date +'%a') -ne 5 && docker-compo
 # stop task on 20:00 PM
 crontab -l | { cat ; echo -e "0 20 * * * docker-compose -f /$(pwd)/docker-compose.yml stop" ; } | crontab -
 
+freshclam

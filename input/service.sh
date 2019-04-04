@@ -7,8 +7,8 @@ function cleanup {
 trap cleanup EXIT
 trap cleanup INT
 
-echo "mount -t cifs -o rw,username=$user,password=$password //$smbip/$smbpath /mnt/migrate"
-mount -t cifs -o rw,username=$user,password=$password //$smbip/$smbpath /mnt/migrate
+echo "mount //$smbip/$smbpath /mnt/migrate"
+mount -t cifs -o rw,username=$user,password=$password,nosuid,nodev,noexec //$smbip/$smbpath /mnt/migrate
 
 while true
 do
