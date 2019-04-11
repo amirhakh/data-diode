@@ -1,17 +1,6 @@
 #!/bin/sh
 
-# add crontab task to disable/enable interface | delete file
-# add logrotate
-# add permission
-# add user
-# harden
-# schedule for active houre
-# log per user
-# log for viruse | executable | connection | login | ...
-
-# apt install docker.io docker-compose
-
-# install Docker
+# install base package
 sudo apt-get remove docker docker-engine docker.io containerd runc
 sudo apt-get install \
     apt-transport-https \
@@ -20,8 +9,9 @@ sudo apt-get install \
     gnupg-agent \
     software-properties-common \
     iptables-persistent \
-    selinux chkrootkit clamav clamav-daemon
+    selinux chkrootkit clamav clamav-daemon inotify-tools
 
+# install Docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 sudo add-apt-repository \
    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \

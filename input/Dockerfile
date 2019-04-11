@@ -7,7 +7,6 @@ RUN mkdir /mnt/migrate && touch /var/log/cron.log && touch /var/log/migrate.log
 RUN crontab -l | { cat; echo -e "0 0 * * 5 rm -rf /mnt/migrate/*\n" ; } | crontab -
 
 COPY service.sh /root/
-#mount.cifs -o username=migrate,password=12345 //172.17.24.118/datamigrate /tmp/cifs/
 
 # ENTRYPOINT [ "bash", "/root/service.sh" ]
 CMD crond && /bin/sh /root/service.sh

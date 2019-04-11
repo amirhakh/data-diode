@@ -9,52 +9,6 @@ volumes:
       o: bind
       device: /mnt/hard/migrate_folder
 
-services:
-  vmn:
-    build: ./input
-    # env_file: ./input/.env
-    # image: name:tag
-    container_name: inputd
-    init: true
-    privileged: true
-    restart: on-failure
-    volumes:
-      - migrate:/migrate
-    networks:
-      vlan1:
-        ipv4_address: 192.168.1.10
-    environment: 
-      - smbip=192.168.1.1
-      - smbpath=infolder
-      - user=input
-      - password=input
-    cap_add:
-      - SYS_ADMIN
-    deploy:
-      restart_policy:
-        condition: on-failure
-  vmo:
-    build: ./output
-    container_name: outputd
-    init: true
-    privileged: true
-    restart: on-failure
-    volumes:
-      - migrate:/migrate
-    networks:
-      vlan2:
-        ipv4_address: 192.168.2.10
-    environment: 
-      - smbip=192.168.2.1
-      - smbpath=test
-      - user=test
-      - password=test
-    cap_add:
-      - SYS_ADMIN
-    deploy:
-      restart_policy:
-        condition: on-failure
-
 networks:
   vlan1:
     driver: macvlan
@@ -70,3 +24,50 @@ networks:
     ipam:
       config:
         - subnet: 192.168.2.0/24
+
+services:
+  vmn:
+    build: ./input
+    # image: name:tag
+    container_name: inputd
+    init: true
+    privileged: true
+    restart: always
+    volumes:
+      - migrate:/migrate
+    networks:
+      vlan1:
+        ipv4_address: 192.168.1.10
+    environment: 
+      - address=/192.168.1.1/infolder
+      - user=input
+      - password=input
+      - type=input
+    cap_add:
+      - SYS_ADMIN
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "20"
+  vmo:
+    build: ./output
+    container_name: outputd
+    init: true
+    privileged: true
+    restart: always
+    volumes:
+      - migrate:/migrate
+    networks:
+      vlan2:
+        ipv4_address: 192.168.2.10
+    environment: 
+      - smbip=/192.168.2.1/test
+      - user=test
+      - password=test
+    cap_add:
+      - SYS_ADMIN
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
