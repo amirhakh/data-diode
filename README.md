@@ -16,7 +16,12 @@ You can setup this project on every machine by customizing `docker-compose.yml` 
     - **type**: [input|output]
 5. change **device: /mnt/hard/migrate_folder** to path with enough storage (like source & destination)
 
-## Install
+## Run temporarly
+
+By running `temp.service.sh` run service with temp container and transient interface up link.
+You must change config for each interface before start script.
+
+## Install permanent
 
 Run command for install each section:
 
@@ -53,13 +58,13 @@ docker rmi smb_vmo smb_vmi
 - [X] setup as service
 - [ ] compile from source
 - [X] schedule service time
-- [ ] schedule connection time (disconnect every some minute)
+- [X] schedule connection time (disconnect every some minute)
 - [ ] schedule data cleaning
 - [ ] timeout for inactive service -> poweroff
 - [ ] autostart servcie
   - [X] add crontab task to delete file
 - [ ] remove unnecessary data
-- [ ] add log rotate
+- [X] add log rotate
   - [X] check for docker service output rotate
 - [ ] user based structure
 - [ ] add user permission manager
@@ -81,9 +86,9 @@ docker rmi smb_vmo smb_vmi
   - [ ] remove unused package
   - [ ] remove package manager
   - [ ] mount root as read-only
-  - [ ] interface down
-- [ ] not active interface at same time
-- [ ] change randomly ip
+  - [X] interface down
+- [X] not active interface at same time
+- [X] change randomly ip
 - [ ] add empty or victim host
 - [ ] check running process
 
