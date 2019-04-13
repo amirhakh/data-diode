@@ -23,7 +23,7 @@ sudo curl -L "https://github.com/docker/compose/releases/download/1.24.0/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 
 docker-compose build
-docker-compose up -d
+docker-compose up
 
 # start task on 8:00 AM except Friday
 crontab -l | { cat ; echo -e "0 8 * * * test $(date +'%a') -ne 5 && docker-compose -f /$(pwd)/docker-compose.yml start" ; } | crontab -

@@ -37,6 +37,16 @@ docker-compose [up|down] # setup | clean service
 docker-compose ps # show running services
 ```
 
+## Uninstall
+
+to uninstall can use:
+
+```bash
+docker-compose down
+docker rm inputd outputd
+docker rmi smb_vmo smb_vmi
+```
+
 ## Todo
 
 - [X] iptable firewall with log
@@ -71,6 +81,7 @@ docker-compose ps # show running services
   - [ ] remove unused package
   - [ ] remove package manager
   - [ ] mount root as read-only
+  - [ ] interface down
 - [ ] not active interface at same time
 - [ ] change randomly ip
 - [ ] add empty or victim host
