@@ -27,12 +27,11 @@ networks:
 
 services:
   vmn:
-    build: ./input
-    # image: name:tag
+    build: ./machine
     container_name: inputd
     init: true
     privileged: true
-    restart: always
+    # restart: always
     volumes:
       - migrate:/migrate
     networks:
@@ -50,20 +49,21 @@ services:
         max-size: "10m"
         max-file: "20"
   vmo:
-    build: ./output
+    build: ./machine
     container_name: outputd
     init: true
     privileged: true
-    restart: always
+    # restart: always
     volumes:
       - migrate:/migrate
     networks:
       vlan2:
         ipv4_address: 192.168.2.10
     environment: 
-      - smbip=/192.168.2.1/test
+      - address=/192.168.2.1/test
       - user=test
       - password=test
+      - type=output
     cap_add:
       - SYS_ADMIN
     logging:

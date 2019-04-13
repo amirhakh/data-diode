@@ -45,6 +45,8 @@ docker-compose ps # show running services
 - [X] schedule service time
 - [ ] schedule connection time (disconnect every some minute)
 - [ ] schedule data cleaning
+- [ ] timeout for inactive service -> poweroff
+- [ ] autostart servcie
   - [X] add crontab task to delete file
 - [ ] remove unnecessary data
 - [ ] add log rotate
@@ -66,7 +68,13 @@ docker-compose ps # show running services
   - [X] mount with `noexec,nodev,nosuid` option
   - [X] sysctl kernel config
   - [ ] `clamav` antivirus check
+  - [ ] remove unused package
+  - [ ] remove package manager
+  - [ ] mount root as read-only
 - [ ] not active interface at same time
+- [ ] change randomly ip
+- [ ] add empty or victim host
+- [ ] check running process
 
 ## Bugs
 

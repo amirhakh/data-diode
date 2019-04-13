@@ -9,7 +9,7 @@ sudo apt-get install \
     gnupg-agent \
     software-properties-common \
     iptables-persistent \
-    selinux chkrootkit clamav clamav-daemon inotify-tools
+    chkrootkit clamav clamav-daemon inotify-tools
 
 # install Docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
