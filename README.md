@@ -59,8 +59,8 @@ docker rmi smb_vmo smb_vmi
 - [ ] compile from source
 - [X] schedule service time
 - [X] schedule connection time (disconnect every some minute)
-- [ ] schedule data cleaning
-- [ ] timeout for inactive service -> poweroff
+- [?] schedule data cleaning
+- [X] timeout for inactive service -> poweroff
 - [ ] autostart servcie
   - [X] add crontab task to delete file
 - [ ] remove unnecessary data
@@ -87,6 +87,7 @@ docker rmi smb_vmo smb_vmi
   - [ ] remove package manager
   - [ ] mount root as read-only
   - [X] interface down
+  - [ ] maximum service run time
 - [X] not active interface at same time
 - [X] change randomly ip
 - [ ] add empty or victim host

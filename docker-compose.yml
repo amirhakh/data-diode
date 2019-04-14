@@ -31,7 +31,7 @@ services:
     container_name: inputd
     init: true
     privileged: true
-    # restart: always
+    restart: always
     volumes:
       - migrate:/migrate
     networks:
@@ -53,7 +53,7 @@ services:
     container_name: outputd
     init: true
     privileged: true
-    # restart: always
+    restart: always
     volumes:
       - migrate:/migrate
     networks:
