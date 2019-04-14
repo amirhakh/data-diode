@@ -1,0 +1,13 @@
+[Unit]
+Description=ClamAV virus database updater
+ConditionPathExists=/opt/backup/backup.service.sh
+After=syslog.target network.target
+
+[Service]
+EnvironmentFile=/opt/backup/env
+ExecStart=/opt/backup/backup.service.sh
+StandardOutput=syslog
+
+[Install]
+Alias=backup
+WantedBy=multi-user.target

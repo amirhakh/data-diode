@@ -14,7 +14,7 @@ You can setup this project on every machine by customizing `docker-compose.yml` 
     - **user**: smb user
     - **password**: smb password
     - **type**: [input|output]
-5. change **device: /mnt/hard/migrate_folder** to path with enough storage (like source & destination)
+5. change **device: /mnt/hard/backup_folder** to path with enough storage (like source & destination)
 
 ## Run temporarly
 

@@ -1,0 +1,6 @@
+# EnvironmentFile
+inlan=enp3s0
+unlan=enx803f5d0b3535
+local_path=/mnt/hard/backup_folder/
+log_path=/var/log/backup/transfer.log
+log_config=/etc/logrotate.d/backup

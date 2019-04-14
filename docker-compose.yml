@@ -1,13 +1,13 @@
 version: '3.7'
 
 volumes:
-  migrate:
-    name: migrate
+  backup:
+    name: backup
     driver: local
     driver_opts:
       type: none
       o: bind
-      device: /mnt/hard/migrate_folder
+      device: /mnt/hard/backup_folder
 
 networks:
   vlan1:
@@ -33,7 +33,7 @@ services:
     privileged: true
     restart: always
     volumes:
-      - migrate:/migrate
+      - backup:/backup
     networks:
       vlan1:
         ipv4_address: 192.168.1.10
@@ -55,7 +55,7 @@ services:
     privileged: true
     restart: always
     volumes:
-      - migrate:/migrate
+      - backup:/backup
     networks:
       vlan2:
         ipv4_address: 192.168.2.10
