@@ -49,7 +49,7 @@ to uninstall can use:
 ```bash
 docker-compose down
 docker rm inputd outputd
-docker rmi smb_vmo smb_vmi
+docker rmi backup2_vmo backup2_vmi
 ```
 
 ## Todo
