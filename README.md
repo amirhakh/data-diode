@@ -57,12 +57,13 @@ docker rmi backup2_vmo backup2_vmi
 - [X] iptable firewall with log
 - [X] setup as service
 - [ ] compile from source
-- [X] schedule service time
+- [ ] schedule service time
 - [X] schedule connection time (disconnect every some minute)
 - [?] schedule data cleaning
+- [X] schedule SMB service time (8 AM-20 PM)
 - [X] timeout for inactive service -> poweroff
-- [ ] autostart servcie
-  - [X] add crontab task to delete file
+- [X] autostart servcie
+  - [?] add crontab task to delete file
 - [ ] remove unnecessary data
 - [X] add log rotate
   - [X] check for docker service output rotate
@@ -79,8 +80,11 @@ docker rmi backup2_vmo backup2_vmi
   - max transaction time
   - miss rule. but move to folder and alert admin
   - time delay for large or lots of file
+-[ ] remove privilaged and sys_admin for container
+- [ ] health check
 - [ ] linux hardening
   - [X] mount with `noexec,nodev,nosuid` option
+  - [X] not active interface at same time
   - [X] sysctl kernel config
   - [ ] `clamav` antivirus check
   - [ ] remove unused package
@@ -88,11 +92,21 @@ docker rmi backup2_vmo backup2_vmi
   - [ ] mount root as read-only
   - [X] interface down
   - [ ] maximum service run time
-- [X] not active interface at same time
+  - [ ] use rbash
+  - [ ] remove script package (python, perl, ruby, php, ...)
+  - [ ] none root user for backup user
+- [ ] attach detection
+  - [ ] check running process
 - [X] change randomly ip
 - [ ] add empty or victim host
-- [ ] check running process
+- [ ] one direction data transmission
 
 ## Bugs
 
 - [ ] not test by hacker
+- [ ] check exploit of docker
+  - https://github.com/scumjr/dirtycow-vdso
+  - https://github.com/dirtycow/dirtycow.github.io/wiki/PoCs
+  - https://brauner.github.io/2019/02/12/privileged-containers.html
+  - https://gist.github.com/FrankSpierings/5c79523ba693aaa38bc963083f48456c
+  - https://blog.paranoidsoftware.com/dirty-cow-cve-2016-5195-docker-container-escape/

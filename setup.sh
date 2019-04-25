@@ -28,9 +28,9 @@ systemctl disable clamav-freshclam.service clamav-daemon.service
 
 docker build ./machine -t machine:backup
 
-mkdir /opt/backup
-cp -r ./machine ./env ./docker-compose.yml ./backup.service.sh /opt/backup/
-chmod +x /opt/backup/backup.service.sh
+mkdir -p "$install_path"
+cp -r ./machine ./env ./docker-compose.yml ./backup.service.sh "$install_path"
+chmod +x "$install_path"/backup.service.sh
 
 mkdir -p /var/log/backup
 echo >> $log_path

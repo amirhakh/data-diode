@@ -1,0 +1,7 @@
+# Environment File for in
+type=input
+address=/192.168.1.1/infolder
+domain=WORKGROUP
+user=input
+password=input
+try=4
