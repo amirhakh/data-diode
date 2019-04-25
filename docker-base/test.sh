@@ -3,7 +3,7 @@
 source ./env
 
 function cleanup {
-  docker stop backup
+  docker stop diode
   docker network rm vlan
   ip link set "$inlan" down
   ip link set "$unlan" down
@@ -19,7 +19,7 @@ cleanup
 
   docker run --rm -t --privileged --cap-add SYS_ADMIN --env-file "$install_path/envin" \
   --network vlan --ip "192.168.1.$(( RANDOM % 240 + 2 ))" --mac-address "c8:60:00"$(hexdump -n 3 -e '":" /1 "%02X" 2 ""' /dev/random) \
-  -v "$local_path":/backup --name backup machine:backup
+  -v "$local_path":/diode --name diode machine:diode
 
   ip link set "$inlan" down
   docker network rm vlan
@@ -31,7 +31,7 @@ cleanup
 
   docker run --rm -t --privileged --cap-add SYS_ADMIN -env-file "$install_path/envun" \
   --network vlan --ip "192.168.1.$(( RANDOM % 240 + 2 ))" --mac-address "c8:60:00"$(hexdump -n 3 -e '":" /1 "%02X" 2 ""' /dev/random) \
-  -v "$local_path":/backup --name backup machine:backup
+  -v "$local_path":/diode --name diode machine:diode
 
   ip link set "$unlan" down
   docker network rm vlan

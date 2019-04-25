@@ -26,13 +26,13 @@ chmod +x /usr/local/bin/docker-compose
 
 systemctl disable clamav-freshclam.service clamav-daemon.service
 
-docker build ./machine -t machine:backup
+docker build ./machine -t machine:diode
 
 mkdir -p "$install_path"
-cp -r ./machine ./env ./docker-compose.yml ./backup.service.sh "$install_path"
-chmod +x "$install_path"/backup.service.sh
+cp -r ./machine ./env ./docker-compose.yml ./diode.service.sh "$install_path"
+chmod +x "$install_path"/diode.service.sh
 
-mkdir -p /var/log/backup
+mkdir -p /var/log/diode
 echo >> $log_path
 [ -f $log_config ] || echo "$log_path {
   su root docker
@@ -42,19 +42,19 @@ echo >> $log_path
   delaycompress
   missingok
 }" > $log_config
-chown root:docker -R /var/log/backup
+chown root:docker -R /var/log/diode
 logrotate $log_config
 
 # crontab -l | grep clamscan && crontab -l | { cat ; echo -e "0 21 * * * clamscan -i -r $local_path" ; } | crontab -
-echo -e "0 21 * * * clamscan -i -r $local_path" > /etc/cron.d/backup_scan
+echo -e "0 21 * * * clamscan -i -r $local_path" > /etc/cron.d/diode_scan
 service cron reload
 
-cp incremental-backup.service /etc/systemd/system/
-chmod 664 /etc/systemd/system/incremental-backup.service
+cp incremental-diode.service /etc/systemd/system/
+chmod 664 /etc/systemd/system/incremental-diode.service
 
 systemctl daemon-reload
-systemctl enable incremental-backup.service
-systemctl start  incremental-backup.service
+systemctl enable incremental-diode.service
+systemctl start  incremental-diode.service
 
 freshclam
 

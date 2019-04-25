@@ -11,6 +11,11 @@ We use very standard hardware:
 ## Software
 We use ``udpcast`` to transfer files over a unidirectional channel. Modbsu and screen sharing work over a very simple Python UDP socket implementation.
 
+dependency:
+```bash
+apt-get install inotify-tools python-pyinotify python-pymodbus python-async python-yaml
+```
+
 ## Features
 At the moment, DYODE can be used for the following usages:
 * File transfer
