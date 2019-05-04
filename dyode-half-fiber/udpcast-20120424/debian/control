@@ -1,0 +1,18 @@
+Source: udpcast
+Section: utils
+Priority: optional
+Maintainer: Alain Knaff <alain@knaff.lu>
+Build-Depends: debhelper (>> 7.0.50~), m4
+Standards-Version: 3.8.4
+Homepage: http://www.udpcast.linux.lu/
+
+Package: udpcast
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: multicast file transfer tool
+ UDPcast can send data simultaneously to many destinations on a LAN.
+ This can be used, for example, to install entire classrooms of PCs at
+ once.  The advantage of UDPcast over other methods (such as NFS, FTP,
+ etc.) is that UDPcast uses Ethernet's multicast abilities, which means
+ it won't take longer to install 15 machines than it would to install
+ just two.

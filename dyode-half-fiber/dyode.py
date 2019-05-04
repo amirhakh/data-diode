@@ -203,7 +203,7 @@ def file_copy(params):
               int(params[1]['port']) + 1,
               params[1]['bitrate'])
     log.debug('Deleting manifest file')
-    # os.remove(manifest_filename)
+    os.remove(manifest_filename)
     for f in files:
         log.info('Sending ' + f)
         send_file(f,

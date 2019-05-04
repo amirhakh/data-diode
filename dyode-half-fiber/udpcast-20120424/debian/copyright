@@ -1,0 +1,58 @@
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
+Name: udpcast
+Maintainer: Alain Knaff <alain@knaff.lu>
+Source: http://udpcast.linux.lu/
+
+Files: *
+Copyright: © 2001–2012 Alain Knaff <alain@knaff.lu>
+License: GPL-2
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License, version two, as
+ published by the Free Software Foundation.
+ .
+ On Debian systems, the full text of the GNU General Public License
+ version 2 can be found in the file “/usr/share/common-licenses/GPL-2”.
+
+Files: fec.c
+Copyright: © 1997–1998 Luigi Rizzo <luigi@iet.unipi.it>
+           © 2001 Alain Knaff <alain@knaff.lu>
+           Portions derived from August 1995 code by:
+           Phil Karn <karn@ka9q.ampr.org>
+           Robert Morelos-Zaragoza <robert@spectra.eng.hawaii.edu>
+           Hari Thirumoorthy <harit@spectra.eng.hawaii.edu>
+License: BSD
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are
+ met:
+ .
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHORS “AS IS” AND ANY EXPRESS OR
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+
+Files: debian/*
+Copyright: © 2001–2010 Tomas Pospisek <tpo_deb@sourcepole.ch>
+           © 2010 Michael Schutte <michi@uiae.at>
+           © 2011-2012 Alain Knaff <alain@knaff.lu>
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 2 of the License, or (at your
+ option) any later version.
+ .
+ On Debian systems, the full text of the earliest applicable version of
+ the GNU General Public License can be found in the file
+ “/usr/share/common-licenses/GPL-2”.

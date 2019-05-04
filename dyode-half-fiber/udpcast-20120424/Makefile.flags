@@ -1,0 +1,6 @@
+ifeq ($(CONFIG_UDPSENDER),y)
+LDLIBS += pthread
+endif
+ifeq ($(CONFIG_UDPRECEIVER),y)
+LDLIBS += pthread
+endif

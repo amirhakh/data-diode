@@ -1,0 +1,276 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(socklib.c)
+
+AC_CONFIG_HEADER(config.h)
+
+dnl Checks for compiler
+AC_PROG_CC
+AC_PROG_GCC_TRADITIONAL
+AC_PROG_INSTALL
+
+dnl Check for Systems
+AC_CANONICAL_SYSTEM
+
+AC_C_CONST
+AC_C_INLINE
+
+
+dnl Checks for libraries.
+
+AC_CHECK_LIB(pthread, pthread_create)
+AC_CHECK_LIB(dl, dlsym)
+
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(fcntl.h limits.h sys/ioctl.h sys/time.h arpa/inet.h netdb.h \
+sys/select.h sys/sockio.h sys/socket.h sys/param.h memory.h malloc.h signal.h \
+net/if.h netinet/in.h winsock2.h sys/uio.h getopt.h dlfcn.h string.h)
+AC_CHECK_HEADERS(termios.h sys/termios.h, [break])
+
+dnl Check for structures
+AC_CHECK_MEMBERS([struct ip_mreqn.imr_ifindex],[],[],[#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+
+dnl Check for types
+AC_CHECK_TYPES(in_addr_t,[],[],[#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif])
+
+
+dnl
+dnl Check to see if llseek() is declared in unistd.h.  On some libc's 
+dnl it is, and on others it isn't..... Thank you glibc developers....
+dnl
+dnl Warning!  Use of --enable-gcc-wall may throw off this test.
+dnl
+dnl
+AC_MSG_CHECKING(whether llseek declared in unistd.h)
+AC_CACHE_VAL(mtools_cv_have_llseek_prototype,
+        AC_TRY_COMPILE(
+[#include <unistd.h>], [extern int llseek(int);],
+        [mtools_cv_have_llseek_prototype=no],
+        [mtools_cv_have_llseek_prototype=yes]))
+AC_MSG_RESULT($mtools_cv_have_llseek_prototype)
+if test "$mtools_cv_have_llseek_prototype" = yes; then
+   AC_DEFINE([HAVE_LLSEEK_PROTOTYPE],1,[Define when you have an LLSEEK prototype])
+fi
+
+AC_MSG_CHECKING(whether lseek64 declared in unistd.h)
+AC_CACHE_VAL(mtools_cv_have_lseek64_prototype,
+        AC_TRY_COMPILE(
+[
+#include "sysincludes.h"
+#include <unistd.h>
+], [extern int lseek64(int);],
+        [mtools_cv_have_lseek64_prototype=no],
+        [mtools_cv_have_lseek64_prototype=yes]))
+AC_MSG_RESULT($mtools_cv_have_lseek64_prototype)
+if test "$mtools_cv_have_lseek64_prototype" = yes; then
+   AC_DEFINE([HAVE_LSEEK64_PROTOTYPE],1,[Define when you have an LSEEK64 prototype])
+fi
+
+
+AC_CHECK_FUNCS(htons kill daemon)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+
+dnl Checks for library functions.
+AC_TYPE_SIGNAL
+AC_CHECK_FUNCS(atexit on_exit tcsetattr lseek64 snprintf inet_pton inet_aton getopt_long dlsym)
+
+dnl
+dnl Check for 64-bit off_t
+dnl
+AC_DEFUN(SFS_CHECK_OFF_T_64,
+[AC_CACHE_CHECK(for 64-bit off_t, sfs_cv_off_t_64,
+AC_TRY_COMPILE([
+#include <unistd.h>
+#include <sys/types.h>
+],[
+switch (0) case 0: case (sizeof (off_t) <= 4):;
+], sfs_cv_off_t_64=no, sfs_cv_off_t_64=yes))
+if test $sfs_cv_off_t_64 = yes; then
+        AC_DEFINE([HAVE_OFF_T_64],1,[Define when the system has a 64 bit off_t type])
+fi])
+
+
+dnl ICE_CC_LOFF_T
+dnl -------------
+dnl
+dnl If the CC compiler supports `loff_t' type,  define `HAVE_LOFF_T'.
+dnl
+AC_DEFUN(ICE_CC_LOFF_T,
+[
+AC_MSG_CHECKING(whether ${CC} supports loff_t type)
+AC_CACHE_VAL(ice_cv_have_loff_t,
+[
+AC_TRY_COMPILE([#include <sys/types.h>],[loff_t a;],
+ice_cv_have_loff_t=yes,
+ice_cv_have_loff_t=no)
+])
+AC_MSG_RESULT($ice_cv_have_loff_t)
+if test "$ice_cv_have_loff_t" = yes; then
+AC_DEFINE([HAVE_LOFF_T],1,[Define when the compiler supports LOFF_T type])
+fi
+])dnl
+
+
+dnl ICE_CC_OFFSET_T
+dnl -------------
+dnl
+dnl If the CC compiler supports `offset_t' type,  define `HAVE_OFFSET_T'.
+dnl
+AC_DEFUN(ICE_CC_OFFSET_T,
+[
+AC_MSG_CHECKING(whether ${CC} supports offset_t type)
+AC_CACHE_VAL(ice_cv_have_offset_t,
+[
+AC_TRY_COMPILE([#include <sys/types.h>],[offset_t a;],
+ice_cv_have_offset_t=yes,
+ice_cv_have_offset_t=no)
+])
+AC_MSG_RESULT($ice_cv_have_offset_t)
+if test "$ice_cv_have_offset_t" = yes; then
+AC_DEFINE([HAVE_OFFSET_T],1,[Define when the compiler supports OFFSET_T type])
+fi
+])dnl
+
+dnl ICE_CC_LONG_LONG
+dnl -------------
+dnl
+dnl If the CC compiler supports `long long' type,  define `HAVE_LONG_LONG'.
+dnl
+AC_DEFUN(ICE_CC_LONG_LONG,
+[
+AC_MSG_CHECKING(whether ${CC} supports long long type)
+AC_CACHE_VAL(ice_cv_have_long_long,
+[
+AC_TRY_COMPILE(,[long long a;],
+ice_cv_have_long_long=yes,
+ice_cv_have_long_long=no)
+])
+AC_MSG_RESULT($ice_cv_have_long_long)
+if test "$ice_cv_have_long_long" = yes; then
+AC_DEFINE([HAVE_LONG_LONG],1,[Define when the compiler supports LONG_LONG type])
+fi
+])dnl
+
+
+SFS_CHECK_OFF_T_64
+ICE_CC_LOFF_T
+ICE_CC_OFFSET_T
+ICE_CC_LONG_LONG
+
+
+[
+host_os0=`echo $host_os | sed 's/-/_/g'`
+host_os1=`echo $host_os0 | sed 's/\./_/g'`
+host_os2=`echo $host_os0 | sed 's/^\([^.]*\)\..*$/\1/g'`
+host_os3=`echo $host_os2 | sed 's/^\([^0-9]*\)[0-9]*$/\1/g'`
+host_cpu1=`echo $host_cpu | sed 's/\./_/g'`
+host_vendor1=`echo $host_vendor | sed 's/\./_/g'`
+HOST_ID="-DCPU_$host_cpu1 -DVENDOR_$host_vendor1 -DOS_$host_os1"
+if [ $host_os1 != $host_os2 ] ; then
+	HOST_ID="$HOST_ID -DOS_$host_os2"
+fi
+if [ $host_os1 != $host_os3 ] && [ $host_os2 != $host_os3 ] ; then
+	HOST_ID="$HOST_ID -DOS_$host_os3"
+fi
+
+my_host_os=`echo $host_os1 $host_os2 $host_os3 | sort -u`
+objs=`echo $srcdir/*.c | sed 's/\.c$/.o/' `
+if [ "X$GCC" = "Xyes" ] ; then
+    Wall=-Wall
+    if [ "$host_os3" = sunos ] ; then
+	    Wall=""
+    fi
+    if [ "$host_os3" = solaris ] ; then
+	    CFLAGS="$CFLAGS -D_XOPEN_SOURCE -D_XOPEN_SOURCE_EXTENDED=1 -D__EXTENSIONS__"
+ 	    LIBS="$LIBS -lnsl -lsocket"
+	    Wall=""
+    fi
+    if [ "$host_os3" = ultrix ] ; then
+	    Wall=""
+    fi
+    if [ "$host_os3" = linux ] ; then
+	    CFLAGS="$CFLAGS -fno-strength-reduce"
+    fi
+    if [ "$host_os3" = aux ] ; then
+	    CFLAGS="$CFLAGS -ZP"
+	    MACHDEPLIBS="-lposix -UTIL"
+    fi
+    case "${host}" in
+       arm*-*-linux) CFLAGS="$CFLAGS -mstructure-size-boundary=8";;
+    esac
+    CFLAGS="$CFLAGS $Wall"
+else
+    if [ $host_os3 = hpux ] ; then
+	    CPPFLAGS="$CPPFLAGS -Ae"
+    fi
+
+    if [ $host_os3 = xenix ] ; then
+	    CFLAGS="$CFLAGS -M2e"
+    fi
+fi
+
+if [ $host_os3 = hpux ] ; then
+	    LDFLAGS="$LDFLAGS -z"
+fi
+
+
+if [ $host_vendor = linux ] ; then
+    LDFLAGS="$LDFLAGS -z"
+fi
+
+if [ $host_os3 = xenix ] ; then
+    LDFLAGS="$LDFLAGS -M2e -i -f 5000"
+fi
+
+if [ $host_os2 = sysv4 ] ; then
+    SHLIB="-lc -L/usr/ucblib -lucb"
+else
+    SHLIB=""
+fi
+
+if [ $host_os3 = isc ] ; then
+    CFLAGS="$CFLAGS -D_SYSV3"
+    SHLIB="-lc_s"
+fi
+
+if [ $host_os3 = nextstep ] ; then
+    CFLAGS="$CFLAGS -DBSD"
+    SHLIB=""
+fi
+
+if [ $host_os3 = mingw -o $host_os3 = mingw32msvc ] ; then
+    LIBS="$LIBS -lws2_32 -liphlpapi"
+    EXESUFFIX=".exe"
+fi
+
+if [ -d /usr/5lib ] ; then
+	extralibdir=-L/usr/5lib
+fi
+
+]
+
+AC_SUBST(extraincludedir)
+AC_SUBST(extralibdir)
+AC_SUBST(MACHDEPLIBS)
+AC_SUBST(SHLIB)
+AC_SUBST(LIBS)
+AC_SUBST(EXESUFFIX)
+AC_SUBST(host_cpu)
+AC_SUBST(HOST_ID)
+AC_SUBST(CFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+AC_OUTPUT(Makefile)

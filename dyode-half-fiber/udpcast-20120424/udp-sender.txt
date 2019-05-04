@@ -1,0 +1,11 @@
+define(`UDPSENDER',`
+<!-- =defdoc udp-sender udp-sender 1 -->
+<!-- =section udp-sender NAME -->
+<!-- =text udp-sender - broadcast file on a LAN -->
+<!-- =section udp-sender AUTHOR -->
+<!-- =text Alain Knaff -->
+<!-- =section udp-sender SYNOPSIS -->
+<!-- =text
+udp-sender [--file <i>file</i>] [--full-duplex] [--half-duplex] [--pipe <i>pipe</i>] [--portbase <i>portbase</i>] [--blocksize <i>size</i>] [--interface <i>net-interface</i>] [--mcast-data-address <i>data-mcast-address</i>] [--mcast-rdv-address <i>mcast-rdv-address</i>] [--max-bitrate <i>bitrate</i>] [--pointopoint</i>] [--async] [--log <i>file</i>] [--min-slice-size <i>min</i>] [--max-slice-size <i>max</i>] [--slice-size] [--ttl <i>time-to-live</i>] [--fec <i>stripes</i>x<i>redundancy</i>/<i>stripesize</i>] [--print-seed] [--rexmit-hello-interval <i>interval</i>] [--autostart <i>autostart</i>] [--broadcast] [--min-receivers receivers] [--min-wait <i>sec</i>] [--max-wait <i>sec</i>] [--nokbd] [--retries-until-drop <i>n</i>] [--bw-period <i>n</i>] [--rate-governor <i>module.so:key1=value1,key2=value2</i>] [--stat-period <i>n</i>] [--print-uncompressed-position <i>flag</i>]
+<!-- =stop -->
+')dnl

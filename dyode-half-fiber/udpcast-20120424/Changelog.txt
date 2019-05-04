@@ -1,0 +1,214 @@
+v20120424
+	* In receiver, return correct status if pipe fails
+	* By default, use nosync, even on device files
+v20110710
+	* fixed some -Wextra compilation warnings
+	* new --no-progress flag to suppress progress display
+	* print most debug messages to log, if available
+	* properly handle Control-C signal
+	* --receive-timeout parameter for receiver timeout during transmission
+	* "real" daemon mode
+v20100501
+	* Merged Michael Schutte's changes
+v20100417
+	* Merged Tomas Pospisek's changes
+v20100130
+	* In busybox, call the executables udp-receiver and
+	  udp-sender, the same as outside of busybox
+v20091230
+	* new "--ignore-lost-data" mode
+	* Lift limit in number of supported network interfaces
+v20091031
+	* Support for start-timeout also on sender
+v20090920
+	* Fixed slice management bug introduced with streaming
+v20090912
+	* Restored block alignment enforcement (needed when reading data from a pipe)
+	* Fixed division-by-zero error on zero-sized transmissions
+	* Only make data blocks as big as needed
+v20090830
+	* "Streaming" mode
+	* On receiver, make failure to send hello packet not fatal
+	* More efficient transmission on small files
+	* Allow pointopoint mode to be "used" (ignored) together with
+	async, as long as a dataMcastAddress is supplied
+v20081213
+	* Compatibility with pre-historic compilers
+v20081130
+	* Fixed a couple of compilation warnings
+v20081116
+	* Settable statistics printout delay
+	* Print uncompressed size only when it makes sense (pipe used, and
+	seekable output)
+	* Linux lseek bug workaround
+v20080914
+	* Added distclean target to make Debian build easier
+	* Adapted to new name of mingw compiler, and other Mingw adaptations
+	* Removed obsolete m486 flag
+	* Fixed parameter types for getsockopt
+	* If there are no participants after autostart delay, do not
+	transmit but exit right away
+	* RpmLint fixes
+	* Adapt to Solaris 9 sparc
+	* Added a lot of short opts (for systems without getopt_long)
+	* pluggable rate governor
+	* Mingw fixes (socket closing)
+v20071228
+	* Removed -Wdeclaration-after-statement flag which only exists
+	on gcc4
+	* Make exit status testing dependant on WIFEXITED rather than
+	MINGW32 (because exit status might be missing on other
+	platforms as well)
+v20070602
+	* Adapt to Solaris 10 x86 (added includes and configure checks)
+	* Patch to fix parallel make & make DESTDIR=/tmp/xxx install
+	* Address gcc4 warnings
+	* Remove some #define fn udpc_fn lines
+v20070323
+	* Fixed typoes in socklib.c
+v20070306
+	* Fix issue with pipes and no destination file on receiver
+v20070218
+	* Doc fix
+v20070205
+	* Adapt to busybox 1.4.1 (Config.in)
+v20070131
+	* Added #include <linux/types.h> to make it compile under (K)ubuntu (to
+	be confirmed)
+	* Fix uninitialized variable in udp-receiver
+v20070129
+	* Adapt to busybox 1.3.2
+v20061220
+	* Adapt to busybox 1.3.0
+v20061216
+	* Darwin patch
+	* Timeout method on receiver
+	* Refactoring to postpone file creation until sender is located
+	* Added start-timeout flag
+v20060929
+	* Fix usage message to use full names for --mcast-data-address and
+	mcast-rdv-address
+v20060921
+	* Avoid variable name "log", apparently, for older compilers,
+	this shadows the name of a built-in
+	* Include uio.h into socklib.h, needed with older include files for
+	iovec
+v20060920
+	* Added missing format string to printMyIp
+v20060917
+	* If --rexmit-hello-interval set on sender, still only display prompt
+	once on receiver
+	* Improved logging (on sender, offer option to periodically
+	log instantaneous bandwidth, log retransmission, and added datestamp
+	to all log)
+	* Enable autoconf (configure) in order to make it easier to
+	compile it on other Unices
+	* Reorganized cmd.html file to make it cleaner HTML (all the
+	man stuff now in separate files)
+	* Fix a buffer overrun on Windows
+v20060619
+	* Add null-termination to option lists
+v20060525
+	* Change copyright into license in RPM spec file
+	* Fix allocation of FEC memory, so that it only happens when
+	needed
+	* Fix udpcast for loopback device (send to "self" address)
+	* In FEC mode make sure we don't get an excessive number of
+	blocks if number of slices is too small
+	* Daemon-mode for udp-sender
+v20060325
+	* Fix packaging, so that we now can build an clean rpm with
+	just the command-line programs. The mkimage script for the
+	embedded system is now within another RPM (udpcast-mkimage)
+	which, for the moment, is still constructed the old kludgy
+	way.
+v20060320
+	* Fixed signed-ness issues (revealed by gcc4)
+	* By default write files in unsynchronized mode, for better performance
+	* Fix case where data address is the same as rendez-vous address.
+v20060312
+	* Added usage message for --nosync option
+v20060309
+	* Fix global_client_config handling in udpr-negotiate.c
+	* more intuitive/consistent names for various options
+v20060208
+	* Fix compilation issue (variable declaration after code)
+	* Avoid sending connect request twice
+v20051223
+	* Phase out of most of the way old endianness backwards
+	compatibility hacks
+	* Mingw compatibility
+	* Commands to do more easier unicast
+	* Fix Case where Control-C is pressed on receiver right when
+	it waits for the "start" keypress
+v20051204
+	* Suppress excessive timeout messages (only print message
+	after 5 timeouts have expired...)
+	* use #ifdef i386 instead of ARCH_X86, fix assembler #ifdefs
+	in fec.c
+	* Fix Makefile to use $(CC) everywhere, rather than hardcoding
+	compiler
+	* Fix terminal handling (missing optional_action parameter)
+v20050226
+	* Fixed signed/unsigned bug
+v20050217
+	* Fixed uninitialized console variable
+v20050206
+	* Refactoring in console.c: do away with dedicated keyboard
+	listener thread in udp-receiver
+	* Fixed race condition which may happen at end of FEC
+	transmission
+	* Fixed a couple of typoes (it is sender, not server...)
+	* Refactoring to allow alias interfaces eth0:0
+	* CYGWIN compatibility
+	* Log key messages (receiver join, etc.) to syslog
+v20040417
+	Removed explicit reference to busybox version from
+	Makefile: from now on, we establish a symbolic link
+v20040222
+	Minor fixes to v20040221
+v20040221
+	Adapt for busybox 1.00pre7
+v20030831
+	Fix bad assertion in FEC mode
+v20030706
+	Applied patch renaming USE_ASSEMBLER into ARCH_X86
+	Applied DESTDIR patch
+v20030701
+	Added exitWait config option to make receiver hang
+	around for a while at end, in order to protect against
+	lost final ACK
+	Make retriesUntilDrop configurable
+v20030615
+	Make sender exit if there are no receivers left during
+	transfer
+v20030611
+	Added --nokbd support to udp-receiver
+v20030609
+	Added COPYING file to source tree detailing the
+	license of fec.c
+v20030605b
+	Fixed license in udpcast.spec
+	Included license printing in udpcast
+v20030605
+	Added missing libbb_udpcast.h file to CVS
+v20030601
+	Fix keyboard mode (udp-receiver left terminal in raw
+	state if started from another participant)
+v20030524
+	If we send our connectreq as a response to a server's
+	hello message, then send it directly to the server,
+	rather than to the broadcast address
+v20030518
+	Robustness against bad packets.
+	Completed Danish language file.
+	Released as 20030517 on web site.
+	Updated doc for new --min-clients type flags
+v20030517
+	Merged patches contributed by various users
+v20030511
+	Busybox support (make sure all symbols are unique,
+	script to move .c/.h files to busybox, applet
+	templates, usage templates, FEC support optional)
+v20030502
+	CVS merge after disk crash of last spring

@@ -7,6 +7,7 @@ import shlex
 import subprocess
 import yaml
 from math import floor
+import signal
 
 import dyode
 import modbus
@@ -56,7 +57,14 @@ def launch_agents(module, properties):
         screen.watch_folder(module, properties)
 
 
+def signal_handler(sig, frame):
+    if sig in [signal.SIGINT, signal.SIGTERM]:
+        pass
+
+
 if __name__ == '__main__':
+    # signal.signal(signal.SIGINT, signal_handler)
+    # signal.signal(signal.SIGTERM, signal_handler)
     with open('config.yaml', 'r') as config_file:
         config = yaml.load(config_file)
 
