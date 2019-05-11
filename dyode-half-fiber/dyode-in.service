@@ -1,0 +1,17 @@
+[Unit]
+Description=Dyode-in service
+ConditionPathExists=/opt/dyode/dyode_in.py
+After=syslog.target network.target
+Wants=network.service
+
+[Service]
+User=diode
+EnvironmentFile=/opt/dyode/env
+ExecStartPre=+/usr/sbin/arp -s $OUT_IP $OUT_MAC
+WorkingDirectory=/opt/dyode/
+ExecStart=/usr/bin/python /opt/dyode/dyode_in.py
+Restart=on-failure
+
+[Install]
+Alias=dyode-in
+WantedBy=multi-user.target

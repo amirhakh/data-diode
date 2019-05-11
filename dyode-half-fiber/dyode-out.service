@@ -1,0 +1,15 @@
+[Unit]
+Description=Dyode-out service
+ConditionPathExists=/opt/dyode/dyode_out.py
+After=syslog.target network.target
+Wants=network.service
+
+[Service]
+User=diode
+WorkingDirectory=/opt/dyode/
+ExecStart=/usr/bin/python /opt/dyode/dyode_out.py
+Restart=on-failure
+
+[Install]
+Alias=dyode-out
+WantedBy=multi-user.target

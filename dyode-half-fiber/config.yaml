@@ -4,23 +4,24 @@ config_date: 08-08-2017
 bitrate: 900
 
 dyode_in:
-  ip: 10.0.1.1
-  mac: 80:3f:5d:0b:35:35
-  interface: enx803f5d0b3535
+  ip: 10.0.0.1
+  mac: 40:16:7e:a9:fb:7a
+  interface: enp3s0
 dyode_out:
-  ip: 10.0.1.2
+  ip: 10.0.0.2
   mac: 40:16:7e:a9:fc:0f
   interface: enp3s0
 
 modules:
   diode_1:
-     type: folder
-     port: 9700
-     bitrate: 1000
-     in: /mnt/hard
-     out: /mnt/hard
-  syslog_1:
-    type: syslog
-    src_port: 514 # check for user access
-    dst_ip: 1.2.3.4
-    dst_port: 514
+    type: folder
+    port: 9700
+    bitrate: 900
+    in: /data/diode
+    out: /data/diode
+    temp: /data/temp
+#  syslog_1:
+#    type: syslog
+#    src_port: 514 # check for user access
+#    dst_ip: 1.2.3.4
+#    dst_port: 514

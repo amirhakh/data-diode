@@ -42,9 +42,10 @@ def watch_folder(properties):
     asyncore.loop()
 
 
-def launch_agents(module, properties):
+def launch_agents(module, properties, bitrate):
     log.debug(module)
-    properties['bitrate'] = bitrate
+    if 'bitrate' not in properties:
+        properties['bitrate'] = bitrate
     log.debug(properties)
     if properties['type'] == 'folder':
         log.debug('Instanciating a file transfer module :: %s' % module)
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         properties['interface_in'] = config['dyode_in']['interface']
         log.debug('Parsing %s' % module)
         log.debug('Trying to launch a new process for module %s' % module)
-        p = multiprocessing.Process(name=str(module), target=launch_agents, args=(module, properties))
+        p = multiprocessing.Process(name=str(module), target=launch_agents, args=(module, properties, bitrate))
         p.start()
 
     # TODO : Check if all modules are still alive and restart the ones that are not

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-idir="/mnt/hard/nexus-data"
-odir="/var/lib/docker/volumes/nexus-data/_data"
+inputdir="/mnt/hard/nexus-data"
+outputdir="/var/lib/docker/volumes/nexus-data/_data"
 
 copy(){
     docker stop nexus
@@ -16,7 +16,53 @@ inoty(){
   done
 }
 
-copy
+duplicity-bk(){
+duplicity --no-compress --no-encryption  \
+    --exclude='/mnt/hard/nexus-data/tmp' \
+    --exclude='/mnt/hard/nexus-data/log' \
+    --exclude='/mnt/hard/nexus-data/cache' \
+    /mnt/hard/nexus-data/ file:///tmp/nxd-dup
+duplicity --no-compress --no-encryption \
+    file:///tmp/nxd-dup/ /var/lib/docker/volumes/nexus-data/_data/
+
+}
+
+rsync-diff-tar() {
+    # tf=$(tempfile)
+    # full/incremental tag ?
+    idir=$1
+    odir=$2
+    archive=$(tempfile)
+    [ -d "$odir" ] || mkdir -p $odir
+    cd ${odir}
+    list=${idir}/change-file.list
+    [ -f "${list}" ] && rm -f ${list}
+    rsync -Warv --delete --exclude='tmp' --exclude='log' --exclude='cache'  $idir/* $odir/ |
+    tail -n +2 |
+    head -n -3 > ${list}
+    cp ${idir}/change-file.list ${odir}/change-file.list
+    grep -v -e '^deleting ' -e '/$' ${list} > $archive
+    outar=${odir}-$(date +"%Y%m%d-%I%M").tar
+    tar -cf ${outar} -T ${archive} change-file.list
+    echo ${outar}
+    rm $archive
+    cd - > /dev/null
+# TODO: check for full or incremental
+}
+
+rsync-diff-untar() {
+    ifile=$1
+    odir=$2
+    [ -d "$odir" ] || mkdir -p $odir
+    cd $odir
+    list=${odir}/change-file.list
+    tar -xf $ifile
+    for i in $(grep -e '^deleting ' $list); do [ -f $i ] && rm -f $i || rmdir $i; done
+    cd -
+}
+
+
+rsync-diff-tar
 
 if [[ "$type" == "input" ]]; then
 
@@ -24,11 +70,12 @@ if [[ "$type" == "input" ]]; then
   while true
   do
     sleep 20
-    o=$(rsync -WarvPn --delete --exclude='tmp' --exclude='log' --exclude='cache'  $idir/* $odir/)
-    blobs=$(echo "$o" | grep ^blobs/ -c)
+    test_run=$(rsync -Warvn --delete --exclude='tmp' --exclude='log' --exclude='cache'  $inputdir/* $outputdir/)
+    blobs=$(echo "$test_run" | grep ^blobs/ -c)
     if [ "$blobs" -gt 0 ]; then
       if [ "$last_blobs" = "$blobs" ]; then
-        copy
+        docker puase
+        rsync-diff-tar $inputdir $outputdir
       else
         last_blobs="$blobs"
         continue
@@ -41,11 +88,10 @@ elif [[ "$type" == "output" ]]; then
   while true
   do
     sleep 10
-    o=$(rsync -WarvPn --delete --exclude='tmp' --exclude='log' --exclude='cache'  $odir/* $idir/)
-    blobs=$(echo "$o" | grep ^blobs/ -c)
+
     if [ "$blobs" -gt 0 ]; then
       if [ "$last_blobs" = "$blobs" ]; then
-        copy
+        rsync-diff-untar
       else
         last_blobs="$blobs"
         continue

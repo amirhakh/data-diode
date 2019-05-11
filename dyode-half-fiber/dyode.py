@@ -29,6 +29,8 @@ log.setLevel(logging.DEBUG)
 # TODO: repository (nexus, ubuntu, windows)
 # TODO: file access: FTP, SFTP, SMB, web, ...
 # TODO: domain access manager
+# TODO: get file name from hash
+# TODO: append new manifest to previous file list
 
 ######################## Reception specific functions ##########################
 
@@ -86,11 +88,13 @@ def file_reception_loop(params):
 
 
 # Launch UDPCast to receive a file
-def receive_file(file_path, interface, ip_in, port_base):
+def receive_file(file_path, interface, ip_in, port_base, timeout=0):
     log.debug(port_base)
     # 10.0.1.1
     command = "udp-receiver --nosync --mcast-rdv-addr {0} --interface {1} --portbase {2} -f '{3}'".format(
         ip_in, interface, port_base, file_path)
+    if timeout > 0:
+        command = command + " --start-timeout {0} --receive-timeout {0}".format(timeout)
     log.debug(command)
     output, err = subprocess.Popen(shlex.split(command), shell=False, stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE).communicate()
@@ -104,8 +108,11 @@ def wait_for_file(sender, params):
     log.debug(params)
     # Use a dedicated name for each process to prevent race conditions
     process_name = multiprocessing.current_process().name
-    manifest_filename = 'manifest_' + process_name + '.cfg'
+    if not os.path.exists(params['temp']):
+        os.mkdir(params['temp'])
+    manifest_filename = params['temp'] + '/manifest_' + process_name + '.cfg'
     receive_file(manifest_filename, params['interface_out'], params['ip_in'], int(params['port']) + 1)
+    log.debug(datetime.datetime.now())
     dirs, files = parse_manifest(manifest_filename)
     if len(files) == 0:
         log.error('No file detected')
@@ -122,10 +129,9 @@ def wait_for_file(sender, params):
             except OSError as exc:  # Guard against race condition
                 if exc.errno != errno.EEXIST:
                     raise
-        if not os.path.exists('/tmp/dyode'):
-            os.mkdir('/tmp/dyode')
-        temp_file = '/tmp/dyode/' + ''.join(
+        temp_file = params['temp'] + '/' + ''.join(
             random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(12))
+        log.debug(datetime.datetime.now())
         receive_file(temp_file, params['interface_out'], params['ip_in'], params['port'])
         log.info('File ' + f + ' received')
         log.debug(datetime.datetime.now())
@@ -134,8 +140,9 @@ def wait_for_file(sender, params):
 
     os.remove(manifest_filename)
     # todo: background
-    for the_file in os.listdir('/tmp/dyode'):
-        file_path = os.path.join('/tmp/dyode', the_file)
+    for the_file in os.listdir(params['temp']):
+        file_path = os.path.join(params['temp'], the_file)
+        file_path = os.path.join(params['temp'], the_file)
         shutil.rmtree(file_path)
 
 
@@ -197,6 +204,7 @@ def file_copy(params):
     write_manifest(dirs, files, manifest_data, manifest_filename, params[1]['in'], params[1]["out"])
     log.info('Sending manifest file : ' + manifest_filename)
 
+    log.debug(datetime.datetime.now())
     send_file(manifest_filename,
               params[1]['interface_in'],
               params[1]['ip_out'],
@@ -204,8 +212,10 @@ def file_copy(params):
               params[1]['bitrate'])
     log.debug('Deleting manifest file')
     os.remove(manifest_filename)
+    time.sleep(0.1)
     for f in files:
         log.info('Sending ' + f)
+        log.debug(datetime.datetime.now())
         send_file(f,
                   params[1]['interface_in'],
                   params[1]['ip_out'],
