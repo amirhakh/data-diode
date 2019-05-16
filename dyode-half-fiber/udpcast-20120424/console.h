@@ -24,8 +24,8 @@ console_t *prepareConsole(int fd);
  * If character available on console, stuff it into c
  */
 int selectWithConsole(console_t *con, int maxFd, 
-		      fd_set *read_set, struct timeval *tv,
-		      int *keyPressed);
+                      fd_set *read_set, struct timeval *tv,
+                      int *keyPressed);
 
 /**
  * Restores console into its original state, and restores everything as it was

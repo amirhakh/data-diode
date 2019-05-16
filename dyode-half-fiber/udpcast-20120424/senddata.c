@@ -27,30 +27,30 @@ typedef struct slice {
     int sliceNo;
     int bytes; /* bytes in slice */
     int nextBlock; /* index of next buffer to be transmitted */
-    volatile enum { 
-	SLICE_FREE, /* free slice, and in the queue of free slices */
-	SLICE_NEW, /* newly allocated. FEC calculation and first 
-		    * transmission */
-	SLICE_XMITTED, /* transmitted */
-	SLICE_ACKED, /* acknowledged (if applicable) */
-	SLICE_PRE_FREE /* no longer used, but not returned to queue */
+    volatile enum {
+        SLICE_FREE, /* free slice, and in the queue of free slices */
+        SLICE_NEW, /* newly allocated. FEC calculation and first
+            * transmission */
+        SLICE_XMITTED, /* transmitted */
+        SLICE_ACKED, /* acknowledged (if applicable) */
+        SLICE_PRE_FREE /* no longer used, but not returned to queue */
     } state;
-    char rxmitMap[MAX_SLICE_SIZE / BITS_PER_CHAR]; 
+    char rxmitMap[MAX_SLICE_SIZE / BITS_PER_CHAR];
     /* blocks to be retransmitted */
 
-    char isXmittedMap[MAX_SLICE_SIZE / BITS_PER_CHAR]; 
-   /* blocks which have already been retransmitted during this round*/
+    char isXmittedMap[MAX_SLICE_SIZE / BITS_PER_CHAR];
+    /* blocks which have already been retransmitted during this round*/
 
-    int rxmitId; /* used to distinguish among several retransmission 
-		  * requests, so that we can easily discard answers to "old"
-		  * requests */
+    int rxmitId; /* used to distinguish among several retransmission
+          * requests, so that we can easily discard answers to "old"
+          * requests */
 
     /* This structure is used to keep track of clients who answered, and
      * to make the reqack message
      */
     struct reqackBm {
-	struct reqack ra;
-	char readySet[MAX_CLIENTS / BITS_PER_CHAR]; /* who is already ok? */
+        struct reqack ra;
+        char readySet[MAX_CLIENTS / BITS_PER_CHAR]; /* who is already ok? */
     } sl_reqack;
 
     char answeredSet[MAX_CLIENTS / BITS_PER_CHAR]; /* who answered at all? */
@@ -59,7 +59,7 @@ typedef struct slice {
     int nrAnswered; /* number of participants who answered; */
     int needRxmit; /* does this need retransmission? */
     int lastGoodBlock; /* last good block of slice (i.e. last block having not
-			* needed retransmission */
+            * needed retransmission */
 
     int lastReqack; /* last req ack sent (debug) */
 #ifdef BB_FEATURE_UDPCAST_FEC
@@ -75,8 +75,8 @@ struct returnChannel {
     produconsum_t incoming; /* where to enqueue incoming messages */
     produconsum_t freeSpace; /* free space */
     struct {
-	int clNo; /* client number */
-	union message msg; /* its message */
+        int clNo; /* client number */
+        union message msg; /* its message */
     } q[QUEUE_SIZE];
     struct net_config *config;
     participantsDb_t participantsDb;
@@ -111,20 +111,20 @@ static int isSliceAcked(struct slice *slice)
 {
 #if DEBUG
     flprintf("Is slice %d acked?  %d\n", slice->sliceNo,
-	     slice->state);
+             slice->state);
 #endif
     if(slice->state == SLICE_ACKED) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
 static int isSliceXmitted(struct slice *slice) {
     if(slice->state == SLICE_XMITTED) {
-	return 1;
+        return 1;
     } else {
-	return 0;
+        return 0;
     }
 }
 
@@ -137,12 +137,12 @@ static int freeSlice(sender_state_t sendst, struct slice *slice) {
 #endif
     slice->state = SLICE_PRE_FREE;
     while(1) {
-	int pos = pc_getProducerPosition(sendst->free_slices_pc);
-	if(sendst->slices[pos].state == SLICE_PRE_FREE)
-	    sendst->slices[pos].state = SLICE_FREE;
-	else
-	    break;
-	pc_produce(sendst->free_slices_pc, 1);
+        int pos = pc_getProducerPosition(sendst->free_slices_pc);
+        if(sendst->slices[pos].state == SLICE_PRE_FREE)
+            sendst->slices[pos].state = SLICE_FREE;
+        else
+            break;
+        pc_produce(sendst->free_slices_pc, 1);
     }
     return 0;
 }
@@ -166,10 +166,10 @@ static struct slice *makeSlice(sender_state_t sendst, int sliceNo) {
 
     /* fixme: use current slice size here */
     if(slice->bytes > config->blockSize * config->sliceSize)
-	slice->bytes = config->blockSize * config->sliceSize;
+        slice->bytes = config->blockSize * config->sliceSize;
 
     if(slice->bytes > config->blockSize)
-	slice->bytes -= slice->bytes % config->blockSize;
+        slice->bytes -= slice->bytes % config->blockSize;
 
     pc_consumed(fifo->data, slice->bytes);
     slice->nextBlock = 0;
@@ -180,18 +180,18 @@ static struct slice *makeSlice(sender_state_t sendst, int sliceNo) {
     BZERO(slice->sl_reqack.readySet);
     slice->nrReady = 0;
 #ifdef BB_FEATURE_UDPCAST_FEC
-    slice->fec_data = sendst->fec_data + (i * config->fec_stripes * 
-					  config->fec_redundancy *
-					  config->blockSize);
+    slice->fec_data = sendst->fec_data + (i * config->fec_stripes *
+                                          config->fec_redundancy *
+                                          config->blockSize);
 #endif
     return slice;
 }
 
 
 static int sendRawData(int sock,
-		       struct net_config *config, 
-		       char *header, int headerSize, 
-		       unsigned char *data, int dataSize)
+                       struct net_config *config,
+                       char *header, int headerSize,
+                       unsigned char *data, int dataSize)
 {
     struct iovec iov[2];
     struct msghdr hdr;
@@ -214,11 +214,11 @@ static int sendRawData(int sock,
     rgWaitAll(config, sock, config->dataMcastAddr.sin_addr.s_addr, packetSize);
     ret = sendmsg(sock, &hdr, 0);
     if (ret < 0) {
-	char ipBuffer[16];
-	udpc_fatal(1, "Could not broadcast data packet to %s:%d (%s)\n",
-		   getIpString(&config->dataMcastAddr, ipBuffer),
-		   getPort(&config->dataMcastAddr),
-		   strerror(errno));
+        char ipBuffer[16];
+        udpc_fatal(1, "Could not broadcast data packet to %s:%d (%s)\n",
+                   getIpString(&config->dataMcastAddr, ipBuffer),
+                   getPort(&config->dataMcastAddr),
+                   strerror(errno));
     }
 
     return 0;
@@ -244,15 +244,15 @@ static int transmitDataBlock(sender_state_t sendst, struct slice *slice, int i)
 
     size = slice->bytes - i * config->blockSize;
     if(size < 0)
-	size = 0;
+        size = 0;
     if(size > config->blockSize)
-	size = config->blockSize;
+        size = config->blockSize;
     
-    sendRawData(sendst->socket, config, 
-		(char *) &msg, sizeof(msg),
-		fifo->dataBuffer + 
-		(slice->base + i * config->blockSize) % fifo->dataBufSize,
-		size);
+    sendRawData(sendst->socket, config,
+                (char *) &msg, sizeof(msg),
+                fifo->dataBuffer +
+                (slice->base + i * config->blockSize) % fifo->dataBufSize,
+                size);
     return 0;
 }
 
@@ -264,8 +264,8 @@ static int transmitFecBlock(sender_state_t sendst, struct slice *slice, int i)
 
     /* Do not transmit zero byte FEC blocks if we are not in async mode */
     if(slice->bytes == 0 && !(config->flags & FLAG_ASYNC))
-	return 0;
-	
+        return 0;
+
     assert(i < config->fec_redundancy * config->fec_stripes);
     
     msg.opCode  = htons(CMD_FEC);
@@ -273,16 +273,16 @@ static int transmitFecBlock(sender_state_t sendst, struct slice *slice, int i)
     msg.sliceNo = htonl(slice->sliceNo);
     msg.blockNo = htons(i);
     msg.reserved2 = 0;
-    msg.bytes = htonl(slice->bytes);    
-    sendRawData(sendst->socket, sendst->config, 
-		(char *) &msg, sizeof(msg),
-		(slice->fec_data + i * config->blockSize), config->blockSize);
+    msg.bytes = htonl(slice->bytes);
+    sendRawData(sendst->socket, sendst->config,
+                (char *) &msg, sizeof(msg),
+                (slice->fec_data + i * config->blockSize), config->blockSize);
     return 0;
 }
 #endif
 
 static int sendSlice(sender_state_t sendst, struct slice *slice,
-		     int retransmitting)
+                     int retransmitting)
 {    
     struct net_config *config = sendst->config;
 
@@ -293,118 +293,118 @@ static int sendSlice(sender_state_t sendst, struct slice *slice,
     int retransmissions=0;
 
     if(retransmitting) {
-	slice->nextBlock = 0;
-	if(slice->state != SLICE_XMITTED)
-	    return 0;
+        slice->nextBlock = 0;
+        if(slice->state != SLICE_XMITTED)
+            return 0;
     } else {
-	if(slice->state != SLICE_NEW)
-	    return 0;
+        if(slice->state != SLICE_NEW)
+            return 0;
     }
 
     nrBlocks = getSliceBlocks(slice, config);
 #ifdef BB_FEATURE_UDPCAST_FEC
     if((config->flags & FLAG_FEC) && !retransmitting) {
-	fecBlocks = config->fec_redundancy * config->fec_stripes;
+        fecBlocks = config->fec_redundancy * config->fec_stripes;
     } else {
-	fecBlocks = 0;
+        fecBlocks = 0;
     }
 #endif
 
 #if DEBUG
     if(retransmitting) {
-	flprintf("%s slice %d from %d to %d (%d bytes) %d\n",
-		retransmitting ? "Retransmitting" : "Sending", 
-		slice->sliceNo, slice->nextBlock, nrBlocks, slice->bytes,
-		config->blockSize);
+        flprintf("%s slice %d from %d to %d (%d bytes) %d\n",
+                 retransmitting ? "Retransmitting" : "Sending",
+                 slice->sliceNo, slice->nextBlock, nrBlocks, slice->bytes,
+                 config->blockSize);
     }
 #endif
 
     if((sendst->config->flags & FLAG_STREAMING)) {
-      rehello = nrBlocks - sendst->config->rehelloOffset;
-      if(rehello < 0)
-	rehello = 0;
+        rehello = nrBlocks - sendst->config->rehelloOffset;
+        if(rehello < 0)
+            rehello = 0;
     } else {
-      rehello = -1;
+        rehello = -1;
     }
 
     /* transmit the data */
     for(i = slice->nextBlock; i < nrBlocks
-#ifdef BB_FEATURE_UDPCAST_FEC
-	  + fecBlocks
-#endif
-	  ; i++) {
-	if(retransmitting) {
-	    if(!BIT_ISSET(i, slice->rxmitMap) ||
-	       BIT_ISSET(i, slice->isXmittedMap)) {
-		/* if slice is not in retransmit list, or has _already_
-		 * been retransmitted, skip it */
-		if(i > slice->lastGoodBlock)
-		    slice->lastGoodBlock = i;
-		continue;
-	    }
-	    SET_BIT(i, slice->isXmittedMap);
-	    retransmissions++;
+    #ifdef BB_FEATURE_UDPCAST_FEC
+        + fecBlocks
+    #endif
+        ; i++) {
+        if(retransmitting) {
+            if(!BIT_ISSET(i, slice->rxmitMap) ||
+                    BIT_ISSET(i, slice->isXmittedMap)) {
+                /* if slice is not in retransmit list, or has _already_
+         * been retransmitted, skip it */
+                if(i > slice->lastGoodBlock)
+                    slice->lastGoodBlock = i;
+                continue;
+            }
+            SET_BIT(i, slice->isXmittedMap);
+            retransmissions++;
 #if DEBUG
-	    flprintf("Retransmitting %d.%d\n", slice->sliceNo, i);
+            flprintf("Retransmitting %d.%d\n", slice->sliceNo, i);
 #endif
-	}
+        }
 
-	if(i == rehello) {
-	    sendHello(sendst->config, sendst->socket, 1);
-	}
+        if(i == rehello) {
+            sendHello(sendst->config, sendst->socket, 1);
+        }
 
-	if(i < nrBlocks)
-	    transmitDataBlock(sendst, slice, i);
+        if(i < nrBlocks)
+            transmitDataBlock(sendst, slice, i);
 #ifdef BB_FEATURE_UDPCAST_FEC
-	else
-	    transmitFecBlock(sendst, slice, i - nrBlocks);
+        else
+            transmitFecBlock(sendst, slice, i - nrBlocks);
 #endif
-	if(!retransmitting && pc_getWaiting(sendst->rc.incoming)) {
-	    i++;
-	    break;
-	}
+        if(!retransmitting && pc_getWaiting(sendst->rc.incoming)) {
+            i++;
+            break;
+        }
     }
 
     if(retransmissions)
-	senderStatsAddRetransmissions(sendst->stats, retransmissions);
+        senderStatsAddRetransmissions(sendst->stats, retransmissions);
     slice->nextBlock = i;
     if(i == nrBlocks
-#ifdef BB_FEATURE_UDPCAST_FEC
-       + fecBlocks
-#endif
-       ) {
-	slice->needRxmit = 0;
-	if(!retransmitting)
-	    slice->state = SLICE_XMITTED;
+        #ifdef BB_FEATURE_UDPCAST_FEC
+            + fecBlocks
+        #endif
+            ) {
+        slice->needRxmit = 0;
+        if(!retransmitting)
+            slice->state = SLICE_XMITTED;
 #if DEBUG
-	flprintf("Done: at block %d %d %d\n", i, retransmitting,
-		 slice->state);
+        flprintf("Done: at block %d %d %d\n", i, retransmitting,
+                 slice->state);
 #endif
-	return 2;
+        return 2;
     }
 #if DEBUG
     flprintf("Done: at block %d %d %d\n", i, retransmitting,
-	     slice->state);
+             slice->state);
 #endif
     return 1;
 }
 
 static int ackSlice(struct slice *slice, struct net_config *net_config,
-		    struct fifo *fifo, sender_stats_t stats)
+                    struct fifo *fifo, sender_stats_t stats)
 {
     if(slice->state == SLICE_ACKED)
-	/* already acked */
-	return 0;
+        /* already acked */
+        return 0;
     if(!(net_config->flags & FLAG_SN)) {
-	if(net_config->discovery == DSC_DOUBLING) {
-		net_config->sliceSize += net_config->sliceSize / 4;
-	   if(net_config->sliceSize >= net_config->max_slice_size) {
-	       net_config->sliceSize = net_config->max_slice_size;
-	       net_config->discovery = DSC_REDUCING;
-	   }
-	   udpc_logprintf(udpc_log, "Doubling slice size to %d\n", 
-			  net_config->sliceSize);
-       }
+        if(net_config->discovery == DSC_DOUBLING) {
+            net_config->sliceSize += net_config->sliceSize / 4;
+            if(net_config->sliceSize >= net_config->max_slice_size) {
+                net_config->sliceSize = net_config->max_slice_size;
+                net_config->discovery = DSC_REDUCING;
+            }
+            udpc_logprintf(udpc_log, "Doubling slice size to %d\n",
+                           net_config->sliceSize);
+        }
     }
     slice->state = SLICE_ACKED;
     pc_produce(fifo->freeMemQueue, slice->bytes);
@@ -413,8 +413,8 @@ static int ackSlice(struct slice *slice, struct net_config *net_config,
     senderStatsAddBytes(stats, slice->bytes);
 
     if(slice->bytes) {
-	displaySenderStats(stats, 
-			   net_config->blockSize, net_config->sliceSize, 0);
+        displaySenderStats(stats,
+                           net_config->blockSize, net_config->sliceSize, 0);
     }
     /* End Statistics */
 
@@ -423,44 +423,44 @@ static int ackSlice(struct slice *slice, struct net_config *net_config,
 
 
 static int sendReqack(struct slice *slice, struct net_config *net_config,
-		      struct fifo *fifo, sender_stats_t stats,
-		      int sock)
+                      struct fifo *fifo, sender_stats_t stats,
+                      int sock)
 {
     /* in async mode, just confirm slice... */
     if((net_config->flags & FLAG_ASYNC) && slice->bytes != 0) {
-	ackSlice(slice, net_config, fifo, stats);
-	return 0;
+        ackSlice(slice, net_config, fifo, stats);
+        return 0;
     }
 
     if((net_config->flags & FLAG_ASYNC)
-#ifdef BB_FEATURE_UDPCAST_FEC
-       && 
-       (net_config->flags & FLAG_FEC)
-#endif
-       ) {
-	return 0;
+        #ifdef BB_FEATURE_UDPCAST_FEC
+            &&
+            (net_config->flags & FLAG_FEC)
+        #endif
+            ) {
+        return 0;
     }
 
     if(!(net_config->flags & FLAG_SN) && slice->rxmitId != 0) {
-	int nrBlocks;
-	nrBlocks = getSliceBlocks(slice, net_config);
+        int nrBlocks;
+        nrBlocks = getSliceBlocks(slice, net_config);
 #if DEBUG
-	flprintf("nrBlocks=%d lastGoodBlock=%d\n",
-		 nrBlocks, slice->lastGoodBlock);
+        flprintf("nrBlocks=%d lastGoodBlock=%d\n",
+                 nrBlocks, slice->lastGoodBlock);
 #endif
-	if(slice->lastGoodBlock != 0 && slice->lastGoodBlock < nrBlocks) {
-	    net_config->discovery = DSC_REDUCING;
-	    if (slice->lastGoodBlock < net_config->sliceSize / 2) {
-		net_config->sliceSize = net_config->sliceSize / 2;
-	    } else {
-		net_config->sliceSize = slice->lastGoodBlock;
-	    }
-	    if(net_config->sliceSize < 32) {
-		/* a minimum of 32 */
-		net_config->sliceSize = 32;
-	    }
-	    udpc_logprintf(udpc_log, "Slice size=%d\n", net_config->sliceSize);
-	}
+        if(slice->lastGoodBlock != 0 && slice->lastGoodBlock < nrBlocks) {
+            net_config->discovery = DSC_REDUCING;
+            if (slice->lastGoodBlock < net_config->sliceSize / 2) {
+                net_config->sliceSize = net_config->sliceSize / 2;
+            } else {
+                net_config->sliceSize = slice->lastGoodBlock;
+            }
+            if(net_config->sliceSize < 32) {
+                /* a minimum of 32 */
+                net_config->sliceSize = 32;
+            }
+            udpc_logprintf(udpc_log, "Slice size=%d\n", net_config->sliceSize);
+        }
     }
 
     slice->lastGoodBlock = 0;
@@ -473,7 +473,7 @@ static int sendReqack(struct slice *slice, struct net_config *net_config,
 
     slice->sl_reqack.ra.reserved = 0;
     memcpy((void*)&slice->answeredSet,(void*)&slice->sl_reqack.readySet,
-	   sizeof(slice->answeredSet));
+           sizeof(slice->answeredSet));
     slice->nrAnswered = slice->nrReady;
 
     /* not everybody is ready yet */
@@ -483,8 +483,8 @@ static int sendReqack(struct slice *slice, struct net_config *net_config,
     slice->sl_reqack.ra.rxmit = htonl(slice->rxmitId);
     
     rgWaitAll(net_config, sock,
-	      net_config->dataMcastAddr.sin_addr.s_addr,
-	      sizeof(slice->sl_reqack));
+              net_config->dataMcastAddr.sin_addr.s_addr,
+              sizeof(slice->sl_reqack));
 #if DEBUG
     flprintf("sending reqack for slice %d\n", slice->sliceNo);
 #endif
@@ -497,18 +497,18 @@ static int sendReqack(struct slice *slice, struct net_config *net_config,
  */
 
 static int doRetransmissions(sender_state_t sendst,
-			     struct slice *slice)
+                             struct slice *slice)
 {
     if(slice->state == SLICE_ACKED)
-	return 0; /* nothing to do */
+        return 0; /* nothing to do */
 
 #if DEBUG
     flprintf("Do retransmissions\n");
 #endif
     /* FIXME: reduce slice size if needed */
     if(slice->needRxmit) {
-	/* do some retransmissions */
-	sendSlice(sendst, slice, 1);
+        /* do some retransmissions */
+        sendSlice(sendst, slice, 1);
     }
     return 0;
 }
@@ -517,8 +517,8 @@ static int doRetransmissions(sender_state_t sendst,
 static void markParticipantAnswered(slice_t slice, int clNo)
 {
     if(BIT_ISSET(clNo, slice->answeredSet))
-	/* client already has answered */
-	return;
+        /* client already has answered */
+        return;
     slice->nrAnswered++;
     SET_BIT(clNo, slice->answeredSet);
 }
@@ -527,36 +527,36 @@ static void markParticipantAnswered(slice_t slice, int clNo)
  * Handles ok message
  */
 static int handleOk(sender_state_t sendst,
-		    struct slice *slice,
-		    int clNo)
+                    struct slice *slice,
+                    int clNo)
 {
     if(slice == NULL)
-	return 0;
+        return 0;
     if(!udpc_isParticipantValid(sendst->rc.participantsDb, clNo)) {
-	udpc_flprintf("Invalid participant %d\n", clNo);
-	return 0;
+        udpc_flprintf("Invalid participant %d\n", clNo);
+        return 0;
     }
     if (BIT_ISSET(clNo, slice->sl_reqack.readySet)) {
         /* client is already marked ready */
 #if DEBUG
-	flprintf("client %d is already ready\n", clNo);
+        flprintf("client %d is already ready\n", clNo);
 #endif
     } else {
-	SET_BIT(clNo, slice->sl_reqack.readySet);
-	slice->nrReady++;
+        SET_BIT(clNo, slice->sl_reqack.readySet);
+        slice->nrReady++;
 #if DEBUG
-	flprintf("client %d replied ok for %p %d ready=%d\n", clNo, 
-		slice, slice->sliceNo, slice->nrReady);
+        flprintf("client %d replied ok for %p %d ready=%d\n", clNo,
+                 slice, slice->sliceNo, slice->nrReady);
 #endif	
-	senderSetAnswered(sendst->stats, clNo);
-	markParticipantAnswered(slice, clNo);
+        senderSetAnswered(sendst->stats, clNo);
+        markParticipantAnswered(slice, clNo);
     }
     return 0;
 }
 
 static int handleRetransmit(sender_state_t sendst,
-			    struct slice *slice,
-			    int clNo, unsigned char *map, int rxmit)
+                            struct slice *slice,
+                            int clNo, unsigned char *map, int rxmit)
 {
     unsigned int i;
 
@@ -565,25 +565,25 @@ static int handleRetransmit(sender_state_t sendst,
 #endif
 
     if(!udpc_isParticipantValid(sendst->rc.participantsDb, clNo)) {
-	udpc_flprintf("Invalid participant %d\n", clNo);
-	return 0;
+        udpc_flprintf("Invalid participant %d\n", clNo);
+        return 0;
     }
     if(slice == NULL)
-	return 0;    
+        return 0;
     if (rxmit < slice->rxmitId) {
 #if 0
-	flprintf("Late answer\n");
+        flprintf("Late answer\n");
 #endif
-	/* late answer to previous Req Ack */
-	return 0;
+        /* late answer to previous Req Ack */
+        return 0;
     }
 #if DEBUG
     logprintf(udpc_log,
-	      "Received retransmit request for slice %d from client %d\n",
-	      slice->sliceNo,clNo);
+              "Received retransmit request for slice %d from client %d\n",
+              slice->sliceNo,clNo);
 #endif
     for(i=0; i <sizeof(slice->rxmitMap) / sizeof(char); i++) {
-	slice->rxmitMap[i] |= ~map[i];
+        slice->rxmitMap[i] |= ~map[i];
     }
     slice->needRxmit = 1;
     markParticipantAnswered(slice, clNo);
@@ -593,23 +593,23 @@ static int handleRetransmit(sender_state_t sendst,
 static int handleDisconnect1(struct slice *slice, int clNo)
 {    
     if(slice != NULL) {
-	if (BIT_ISSET(clNo, slice->sl_reqack.readySet)) {
-	    /* avoid counting client both as left and ready */
-	    CLR_BIT(clNo, slice->sl_reqack.readySet);
-	    slice->nrReady--;
-	}
-	if (BIT_ISSET(clNo, slice->answeredSet)) {
-	    slice->nrAnswered--;
-	    CLR_BIT(clNo, slice->answeredSet);
-	}
+        if (BIT_ISSET(clNo, slice->sl_reqack.readySet)) {
+            /* avoid counting client both as left and ready */
+            CLR_BIT(clNo, slice->sl_reqack.readySet);
+            slice->nrReady--;
+        }
+        if (BIT_ISSET(clNo, slice->answeredSet)) {
+            slice->nrAnswered--;
+            CLR_BIT(clNo, slice->answeredSet);
+        }
     }
     return 0;
 }
 
 static int handleDisconnect(participantsDb_t db,
-			    struct slice *slice1,
-			    struct slice *slice2,
-			    int clNo)
+                            struct slice *slice1,
+                            struct slice *slice2,
+                            int clNo)
 {
     handleDisconnect1(slice1, clNo);
     handleDisconnect1(slice2, clNo);
@@ -618,19 +618,19 @@ static int handleDisconnect(participantsDb_t db,
 }
 
 static struct slice *findSlice(struct slice *slice1,
-			       struct slice *slice2,
-			       int sliceNo)
+                               struct slice *slice2,
+                               int sliceNo)
 {
     if(slice1 != NULL && slice1->sliceNo == sliceNo)
-	return slice1;
+        return slice1;
     if(slice2 != NULL && slice2->sliceNo == sliceNo)
-	return slice2;
+        return slice2;
     return NULL;
 }
 
 static int handleNextMessage(sender_state_t sendst,
-			     struct slice *xmitSlice,
-			     struct slice *rexmitSlice)
+                             struct slice *xmitSlice,
+                             struct slice *rexmitSlice)
 {
     int pos = pc_getConsumerPosition(sendst->rc.incoming);
     union message *msg = &sendst->rc.q[pos].msg;
@@ -642,31 +642,31 @@ static int handleNextMessage(sender_state_t sendst,
 
     pc_consumeAny(sendst->rc.incoming);
     switch(ntohs(msg->opCode)) {
-	case CMD_OK:
-	    handleOk(sendst, 
-		     findSlice(xmitSlice, rexmitSlice, ntohl(msg->ok.sliceNo)),
-		     clNo);
-	    break;
-	case CMD_DISCONNECT:
-	    handleDisconnect(sendst->rc.participantsDb, 
-			     xmitSlice, rexmitSlice, clNo);
-	    break;	    
-	case CMD_RETRANSMIT:
+    case CMD_OK:
+        handleOk(sendst,
+                 findSlice(xmitSlice, rexmitSlice, ntohl(msg->ok.sliceNo)),
+                 clNo);
+        break;
+    case CMD_DISCONNECT:
+        handleDisconnect(sendst->rc.participantsDb,
+                         xmitSlice, rexmitSlice, clNo);
+        break;
+    case CMD_RETRANSMIT:
 #if DEBUG
-	    flprintf("Received retransmittal request for %ld from %d:\n",
-		     (long) xtohl(msg->retransmit.sliceNo), clNo);
+        flprintf("Received retransmittal request for %ld from %d:\n",
+                 (long) xtohl(msg->retransmit.sliceNo), clNo);
 #endif
-	    handleRetransmit(sendst,
-			     findSlice(xmitSlice, rexmitSlice,
-				       ntohl(msg->retransmit.sliceNo)),
-			     clNo,
-			     msg->retransmit.map,
-			     msg->retransmit.rxmit);
-	    break;
-	default:
-	    udpc_flprintf("Bad command %04x\n", 
-			  (unsigned short) msg->opCode);
-	    break;
+        handleRetransmit(sendst,
+                         findSlice(xmitSlice, rexmitSlice,
+                                   ntohl(msg->retransmit.sliceNo)),
+                         clNo,
+                         msg->retransmit.map,
+                         msg->retransmit.rxmit);
+        break;
+    default:
+        udpc_flprintf("Bad command %04x\n",
+                      (unsigned short) msg->opCode);
+        break;
     }
     pc_consumed(sendst->rc.incoming, 1);
     pc_produce(sendst->rc.freeSpace, 1);
@@ -677,30 +677,30 @@ static THREAD_RETURN returnChannelMain(void *args) {
     struct returnChannel *returnChannel = (struct returnChannel *) args;
 
     while(1) {
-	struct sockaddr_in from;
-	int clNo;
-	int pos = pc_getConsumerPosition(returnChannel->freeSpace);
-	pc_consumeAny(returnChannel->freeSpace);
+        struct sockaddr_in from;
+        int clNo;
+        int pos = pc_getConsumerPosition(returnChannel->freeSpace);
+        pc_consumeAny(returnChannel->freeSpace);
 
-	RECV(returnChannel->rcvSock, 
-	     returnChannel->q[pos].msg, from,
-	     returnChannel->config->portBase);
-	clNo = udpc_lookupParticipant(returnChannel->participantsDb, &from);
-	if (clNo < 0) { 
-	    /* packet from unknown provenance */
-	    continue;
-	}
-	returnChannel->q[pos].clNo = clNo;
-	pc_consumed(returnChannel->freeSpace, 1);
-	pc_produce(returnChannel->incoming, 1);
+        RECV(returnChannel->rcvSock,
+             returnChannel->q[pos].msg, from,
+             returnChannel->config->portBase);
+        clNo = udpc_lookupParticipant(returnChannel->participantsDb, &from);
+        if (clNo < 0) {
+            /* packet from unknown provenance */
+            continue;
+        }
+        returnChannel->q[pos].clNo = clNo;
+        pc_consumed(returnChannel->freeSpace, 1);
+        pc_produce(returnChannel->incoming, 1);
     }
     return 0;
 }
 
 
 static void initReturnChannel(struct returnChannel *returnChannel,
-			      struct net_config *config,
-			      int sock) {
+                              struct net_config *config,
+                              int sock) {
     returnChannel->config = config;
     returnChannel->rcvSock = sock;
     returnChannel->freeSpace = pc_makeProduconsum(QUEUE_SIZE,"msg:free-queue");
@@ -708,7 +708,7 @@ static void initReturnChannel(struct returnChannel *returnChannel,
     returnChannel->incoming = pc_makeProduconsum(QUEUE_SIZE,"msg:incoming");
 
     pthread_create(&returnChannel->thread, NULL,
-		   returnChannelMain, returnChannel);
+                   returnChannelMain, returnChannel);
 
 }
 
@@ -738,223 +738,223 @@ static THREAD_RETURN netSenderMain(void	*args0)
     /* transmit the data */
     if(config->default_slice_size == 0) {
 #ifdef BB_FEATURE_UDPCAST_FEC
-	if(config->flags & FLAG_FEC) {
-	    config->sliceSize = 
-		config->fec_stripesize * config->fec_stripes;
-	} else
+        if(config->flags & FLAG_FEC) {
+            config->sliceSize =
+                    config->fec_stripesize * config->fec_stripes;
+        } else
 #endif
-	  if(config->flags & FLAG_ASYNC)
-	    config->sliceSize = 1024;
-	else if (sendst->config->flags & FLAG_SN) {
-	    sendst->config->sliceSize = 112;
-	} else
-	    sendst->config->sliceSize = 130;
-	sendst->config->discovery = DSC_DOUBLING;
+            if(config->flags & FLAG_ASYNC)
+                config->sliceSize = 1024;
+            else if (sendst->config->flags & FLAG_SN) {
+                sendst->config->sliceSize = 112;
+            } else
+                sendst->config->sliceSize = 130;
+        sendst->config->discovery = DSC_DOUBLING;
     } else {
-	config->sliceSize = config->default_slice_size;
+        config->sliceSize = config->default_slice_size;
 #ifdef BB_FEATURE_UDPCAST_FEC
-	if((config->flags & FLAG_FEC) &&
-	   (config->sliceSize > 128 * config->fec_stripes))
-	    config->sliceSize = 128 * config->fec_stripes;
+        if((config->flags & FLAG_FEC) &&
+                (config->sliceSize > 128 * config->fec_stripes))
+            config->sliceSize = 128 * config->fec_stripes;
 #endif
     }
 
 #ifdef BB_FEATURE_UDPCAST_FEC
     if( (sendst->config->flags & FLAG_FEC) &&
-	config->max_slice_size > config->fec_stripes * 128)
-      config->max_slice_size = config->fec_stripes * 128;
+            config->max_slice_size > config->fec_stripes * 128)
+        config->max_slice_size = config->fec_stripes * 128;
 #endif
 
     if(config->sliceSize > config->max_slice_size)
-	config->sliceSize = config->max_slice_size;
+        config->sliceSize = config->max_slice_size;
 
     assert(config->sliceSize <= MAX_SLICE_SIZE);
 
     do {
-	/* first, cleanup rexmit Slice if needed */
+        /* first, cleanup rexmit Slice if needed */
 
-	if(rexmitSlice != NULL) {
-	    if(rexmitSlice->nrReady == 
-	       udpc_nrParticipants(sendst->rc.participantsDb)){
+        if(rexmitSlice != NULL) {
+            if(rexmitSlice->nrReady ==
+                    udpc_nrParticipants(sendst->rc.participantsDb)){
 #if DEBUG
-		flprintf("slice is ready\n");
+                flprintf("slice is ready\n");
 #endif
-		ackSlice(rexmitSlice, sendst->config, sendst->fifo, 
-			 sendst->stats);
-	    }
-	    if(isSliceAcked(rexmitSlice)) {
-		freeSlice(sendst, rexmitSlice);
-		rexmitSlice = NULL;
-	    }
-	}
+                ackSlice(rexmitSlice, sendst->config, sendst->fifo,
+                         sendst->stats);
+            }
+            if(isSliceAcked(rexmitSlice)) {
+                freeSlice(sendst, rexmitSlice);
+                rexmitSlice = NULL;
+            }
+        }
 
-	/* then shift xmit slice to rexmit slot, if possible */
-	if(rexmitSlice == NULL &&  xmitSlice != NULL && 
-	   isSliceXmitted(xmitSlice)) {
-	    rexmitSlice = xmitSlice;
-	    xmitSlice = NULL;
-	    sendReqack(rexmitSlice, sendst->config, sendst->fifo, sendst->stats,
-		       sendst->socket);
-	}
+        /* then shift xmit slice to rexmit slot, if possible */
+        if(rexmitSlice == NULL &&  xmitSlice != NULL &&
+                isSliceXmitted(xmitSlice)) {
+            rexmitSlice = xmitSlice;
+            xmitSlice = NULL;
+            sendReqack(rexmitSlice, sendst->config, sendst->fifo, sendst->stats,
+                       sendst->socket);
+        }
 
-	/* handle any messages */
-	if(pc_getWaiting(sendst->rc.incoming)) {
+        /* handle any messages */
+        if(pc_getWaiting(sendst->rc.incoming)) {
 #if DEBUG
-	    flprintf("Before message %d\n",
-		    pc_getWaiting(sendst->rc.incoming));
+            flprintf("Before message %d\n",
+                     pc_getWaiting(sendst->rc.incoming));
 #endif
-	    handleNextMessage(sendst, xmitSlice, rexmitSlice);
+            handleNextMessage(sendst, xmitSlice, rexmitSlice);
 
-	    /* restart at beginning of loop: we may have acked the rxmit
-	     * slice, makeing it possible to shift the pipe */
-	    continue;
-	}
+            /* restart at beginning of loop: we may have acked the rxmit
+         * slice, makeing it possible to shift the pipe */
+            continue;
+        }
 
-	/* do any needed retransmissions */
-	if(rexmitSlice != NULL && rexmitSlice->needRxmit) {
-	    doRetransmissions(sendst, rexmitSlice);
-	    /* restart at beginning: new messages may have arrived during
-	     * retransmission  */
-	    continue;
-	}
+        /* do any needed retransmissions */
+        if(rexmitSlice != NULL && rexmitSlice->needRxmit) {
+            doRetransmissions(sendst, rexmitSlice);
+            /* restart at beginning: new messages may have arrived during
+         * retransmission  */
+            continue;
+        }
 
-	/* if all participants answered, send req ack */
-	if(rexmitSlice != NULL && 
-	   rexmitSlice->nrAnswered == 
-	   udpc_nrParticipants(sendst->rc.participantsDb)) {
-	    rexmitSlice->rxmitId++;
-	    sendReqack(rexmitSlice, sendst->config, sendst->fifo, sendst->stats,
-		       sendst->socket);
-	}
+        /* if all participants answered, send req ack */
+        if(rexmitSlice != NULL &&
+                rexmitSlice->nrAnswered ==
+                udpc_nrParticipants(sendst->rc.participantsDb)) {
+            rexmitSlice->rxmitId++;
+            sendReqack(rexmitSlice, sendst->config, sendst->fifo, sendst->stats,
+                       sendst->socket);
+        }
 
-	if(xmitSlice == NULL && !atEnd) {
+        if(xmitSlice == NULL && !atEnd) {
 #if DEBUG
-	    flprintf("SN=%d\n", sendst->config->flags & FLAG_SN);
+            flprintf("SN=%d\n", sendst->config->flags & FLAG_SN);
 #endif
-	    if((sendst->config->flags & FLAG_SN) ||
-	       rexmitSlice == NULL) {
+            if((sendst->config->flags & FLAG_SN) ||
+                    rexmitSlice == NULL) {
 #ifdef BB_FEATURE_UDPCAST_FEC
-		if(sendst->config->flags & FLAG_FEC) {
-		    int i;
-		    pc_consume(sendst->fec_data_pc, 1);
-		    i = pc_getConsumerPosition(sendst->fec_data_pc);
-		    xmitSlice = &sendst->slices[i];
-		    pc_consumed(sendst->fec_data_pc, 1);
-		} else
+                if(sendst->config->flags & FLAG_FEC) {
+                    int i;
+                    pc_consume(sendst->fec_data_pc, 1);
+                    i = pc_getConsumerPosition(sendst->fec_data_pc);
+                    xmitSlice = &sendst->slices[i];
+                    pc_consumed(sendst->fec_data_pc, 1);
+                } else
 #endif
-		  {
-		    xmitSlice = makeSlice(sendst, sliceNo++);
-		}
-		if(xmitSlice->bytes == 0)
-		    atEnd = 1;
-	    }
-	}
-	 
-	if(xmitSlice != NULL && xmitSlice->state == SLICE_NEW) {
-	    sendSlice(sendst, xmitSlice, 0);
-#if DEBUG
-	    flprintf("%d Interrupted at %d/%d\n", xmitSlice->sliceNo, 
-		     xmitSlice->nextBlock, 
-		     getSliceBlocks(xmitSlice, sendst->config));
-#endif
-	    continue;
-	}
-	if(atEnd && rexmitSlice == NULL && xmitSlice == NULL)
-	    break;
+                {
+                    xmitSlice = makeSlice(sendst, sliceNo++);
+                }
+                if(xmitSlice->bytes == 0)
+                    atEnd = 1;
+            }
+        }
 
-	if(sendst->config->flags & FLAG_ASYNC)
-	    break;
+        if(xmitSlice != NULL && xmitSlice->state == SLICE_NEW) {
+            sendSlice(sendst, xmitSlice, 0);
+#if DEBUG
+            flprintf("%d Interrupted at %d/%d\n", xmitSlice->sliceNo,
+                     xmitSlice->nextBlock,
+                     getSliceBlocks(xmitSlice, sendst->config));
+#endif
+            continue;
+        }
+        if(atEnd && rexmitSlice == NULL && xmitSlice == NULL)
+            break;
+
+        if(sendst->config->flags & FLAG_ASYNC)
+            break;
 
 #if DEBUG
-	flprintf("Waiting for timeout...\n");
+        flprintf("Waiting for timeout...\n");
 #endif
-	gettimeofday(&tv, 0);
-	ts.tv_sec = tv.tv_sec;
-	ts.tv_nsec = (tv.tv_usec + 1.1*waitAverage) * 1000;
+        gettimeofday(&tv, 0);
+        ts.tv_sec = tv.tv_sec;
+        ts.tv_nsec = (tv.tv_usec + 1.1*waitAverage) * 1000;
 
 #ifdef WINDOWS
-	/* Windows has a granularity of 1 millisecond in its timer. Take this
-	 * into account here */
-	#define GRANULARITY 1000000
-	ts.tv_nsec += 3*GRANULARITY/2;
-	ts.tv_nsec -= ts.tv_nsec % GRANULARITY;
+        /* Windows has a granularity of 1 millisecond in its timer. Take this
+     * into account here */
+#define GRANULARITY 1000000
+        ts.tv_nsec += 3*GRANULARITY/2;
+        ts.tv_nsec -= ts.tv_nsec % GRANULARITY;
 #endif
 
 #define BILLION 1000000000
 
-	while(ts.tv_nsec >= BILLION) {
-	    ts.tv_nsec -= BILLION;
-	    ts.tv_sec++;
-	}
+        while(ts.tv_nsec >= BILLION) {
+            ts.tv_nsec -= BILLION;
+            ts.tv_sec++;
+        }
 
-	if(rexmitSlice->rxmitId > 10)
-	    /* after tenth retransmission, wait minimum one second */
-	    ts.tv_sec++;
+        if(rexmitSlice->rxmitId > 10)
+            /* after tenth retransmission, wait minimum one second */
+            ts.tv_sec++;
 
-	if(pc_consumeAnyWithTimeout(sendst->rc.incoming, &ts) != 0) {
+        if(pc_consumeAnyWithTimeout(sendst->rc.incoming, &ts) != 0) {
 #if DEBUG
-	    flprintf("Have data\n");
+            flprintf("Have data\n");
 #endif
-	    {
-		struct timeval tv2;
-		unsigned long timeout;
-		gettimeofday(&tv2, 0);
-		timeout = 
-		    (tv2.tv_sec - tv.tv_sec) * 1000000+
-		    tv2.tv_usec - tv.tv_usec;
-		if(nrWaited)
-		    timeout += waitAverage;
-		waitAverage += 9; /* compensate against rounding errors */
-		waitAverage = (0.9 * waitAverage + 0.1 * timeout);
-	    }
-	    nrWaited = 0;
-	    continue;
-	}
-	if(rexmitSlice == NULL) {
-	    udpc_flprintf("Weird. Timeout and no rxmit slice");
-	    break;
-	}
-	if(nrWaited > 5){
+            {
+                struct timeval tv2;
+                unsigned long timeout;
+                gettimeofday(&tv2, 0);
+                timeout =
+                        (tv2.tv_sec - tv.tv_sec) * 1000000+
+                        tv2.tv_usec - tv.tv_usec;
+                if(nrWaited)
+                    timeout += waitAverage;
+                waitAverage += 9; /* compensate against rounding errors */
+                waitAverage = (0.9 * waitAverage + 0.1 * timeout);
+            }
+            nrWaited = 0;
+            continue;
+        }
+        if(rexmitSlice == NULL) {
+            udpc_flprintf("Weird. Timeout and no rxmit slice");
+            break;
+        }
+        if(nrWaited > 5){
 #ifndef WINDOWS
-	    /* on Cygwin, we would get too many of those messages... */
-	    udpc_flprintf("Timeout notAnswered=");
-	    udpc_printNotSet(sendst->rc.participantsDb, 
-			     rexmitSlice->answeredSet);
-	    udpc_flprintf(" notReady=");
-	    udpc_printNotSet(sendst->rc.participantsDb, rexmitSlice->sl_reqack.readySet);
-	    udpc_flprintf(" nrAns=%d nrRead=%d nrPart=%d avg=%ld\n",
-			  rexmitSlice->nrAnswered,
-			  rexmitSlice->nrReady,
-			  udpc_nrParticipants(sendst->rc.participantsDb),
-			  waitAverage);
-	    nrWaited=0;
+            /* on Cygwin, we would get too many of those messages... */
+            udpc_flprintf("Timeout notAnswered=");
+            udpc_printNotSet(sendst->rc.participantsDb,
+                             rexmitSlice->answeredSet);
+            udpc_flprintf(" notReady=");
+            udpc_printNotSet(sendst->rc.participantsDb, rexmitSlice->sl_reqack.readySet);
+            udpc_flprintf(" nrAns=%d nrRead=%d nrPart=%d avg=%ld\n",
+                          rexmitSlice->nrAnswered,
+                          rexmitSlice->nrReady,
+                          udpc_nrParticipants(sendst->rc.participantsDb),
+                          waitAverage);
+            nrWaited=0;
 #endif
-	}
-	nrWaited++;
-	if(rexmitSlice->rxmitId > config->retriesUntilDrop) {
-	    int i;
+        }
+        nrWaited++;
+        if(rexmitSlice->rxmitId > config->retriesUntilDrop) {
+            int i;
             for(i=0; i < MAX_CLIENTS; i++) {
-                if(udpc_isParticipantValid(sendst->rc.participantsDb, i) && 
-		   !BIT_ISSET(i, rexmitSlice->sl_reqack.readySet)) {
+                if(udpc_isParticipantValid(sendst->rc.participantsDb, i) &&
+                        !BIT_ISSET(i, rexmitSlice->sl_reqack.readySet)) {
                     udpc_flprintf("Dropping client #%d because of timeout\n",
-				  i);
+                                  i);
 #ifdef USE_SYSLOG
-		    syslog(LOG_INFO, "dropped client #%d because of timeout", 
-				    i);
+                    syslog(LOG_INFO, "dropped client #%d because of timeout",
+                           i);
 #endif
                     udpc_removeParticipant(sendst->rc.participantsDb, i);
                     if(nrParticipants(sendst->rc.participantsDb) == 0)
-			goto exit_main_loop;
+                        goto exit_main_loop;
                 }
             }
-	    continue;
-	}
-	rexmitSlice->rxmitId++;
-	sendReqack(rexmitSlice, sendst->config, sendst->fifo, sendst->stats,
-		   sendst->socket);
+            continue;
+        }
+        rexmitSlice->rxmitId++;
+        sendReqack(rexmitSlice, sendst->config, sendst->fifo, sendst->stats,
+                   sendst->socket);
     } while(udpc_nrParticipants(sendst->rc.participantsDb)||
-	    (config->flags & FLAG_ASYNC));
- exit_main_loop:
+            (config->flags & FLAG_ASYNC));
+exit_main_loop:
     cancelReturnChannel(&sendst->rc);
     pc_produceEnd(sendst->fifo->freeMemQueue);
     return 0;
@@ -962,11 +962,11 @@ static THREAD_RETURN netSenderMain(void	*args0)
 
 
 #define ADR(x, bs) (fifo->dataBuffer + \
-	(slice->base+(x)*bs) % fifo->dataBufSize)
+    (slice->base+(x)*bs) % fifo->dataBufSize)
 
 #ifdef BB_FEATURE_UDPCAST_FEC
 static void fec_encode_all_stripes(sender_state_t sendst,
-				   struct slice *slice)
+                                   struct slice *slice)
 {
     int stripe;
     struct net_config *config = sendst->config;
@@ -982,17 +982,17 @@ static void fec_encode_all_stripes(sender_state_t sendst,
     unsigned char *data_blocks[128];
 
     if(leftOver) {
-	unsigned char *lastBlock = ADR(nrBlocks - 1, config->blockSize);
-	memset(lastBlock+leftOver, 0, config->blockSize-leftOver);
+        unsigned char *lastBlock = ADR(nrBlocks - 1, config->blockSize);
+        memset(lastBlock+leftOver, 0, config->blockSize-leftOver);
     }
 
     for(stripe=0; stripe<stripes; stripe++) {
-	int i,j;
-	for(i=0; i<redundancy; i++)
-	    fec_blocks[i] = fec_data+config->blockSize*(stripe+i*stripes);
-	for(i=stripe, j=0; i< nrBlocks; i+=stripes, j++)
-	    data_blocks[j] = ADR(i, config->blockSize);
-	fec_encode(config->blockSize, data_blocks, j, fec_blocks, redundancy);
+        int i,j;
+        for(i=0; i<redundancy; i++)
+            fec_blocks[i] = fec_data+config->blockSize*(stripe+i*stripes);
+        for(i=stripe, j=0; i< nrBlocks; i+=stripes, j++)
+            data_blocks[j] = ADR(i, config->blockSize);
+        fec_encode(config->blockSize, data_blocks, j, fec_blocks, redundancy);
 
     }
 }
@@ -1006,21 +1006,21 @@ static THREAD_RETURN fecMain(void *args0)
     int sliceNo = 0;
 
     while(1) {
-	/* consume free slice */
-	slice = makeSlice(sendst, sliceNo++);
-	/* do the fec calculation here */
-	fec_encode_all_stripes(sendst,slice);
-	pc_produce(sendst->fec_data_pc, 1);
+        /* consume free slice */
+        slice = makeSlice(sendst, sliceNo++);
+        /* do the fec calculation here */
+        fec_encode_all_stripes(sendst,slice);
+        pc_produce(sendst->fec_data_pc, 1);
     }
     return 0;
 }
 #endif
 
 int spawnNetSender(struct fifo *fifo,
-		   int sock,
-		   struct net_config *config,
-		   participantsDb_t db,
-		   sender_stats_t stats)
+                   int sock,
+                   struct net_config *config,
+                   participantsDb_t db,
+                   sender_stats_t stats)
 {
     int i;
 
@@ -1031,10 +1031,10 @@ int spawnNetSender(struct fifo *fifo,
     sendst->stats = stats;
 #ifdef BB_FEATURE_UDPCAST_FEC
     if(sendst->config->flags & FLAG_FEC)
-      sendst->fec_data =  xmalloc(NR_SLICES *
-				  config->fec_stripes * 
-				  config->fec_redundancy *
-				  config->blockSize);
+        sendst->fec_data =  xmalloc(NR_SLICES *
+                                    config->fec_stripes *
+                                    config->fec_redundancy *
+                                    config->blockSize);
 #endif
     sendst->rc.participantsDb = db;
     initReturnChannel(&sendst->rc, sendst->config, sendst->socket);
@@ -1042,15 +1042,15 @@ int spawnNetSender(struct fifo *fifo,
     sendst->free_slices_pc = pc_makeProduconsum(NR_SLICES, "free slices");
     pc_produce(sendst->free_slices_pc, NR_SLICES);
     for(i = 0; i <NR_SLICES; i++)
-	sendst->slices[i].state = SLICE_FREE;
+        sendst->slices[i].state = SLICE_FREE;
 
 #ifdef BB_FEATURE_UDPCAST_FEC
     if(sendst->config->flags & FLAG_FEC) {
-	/* Free memory queue is initially full */
-	fec_init();
-	sendst->fec_data_pc = pc_makeProduconsum(NR_SLICES, "fec data");
+        /* Free memory queue is initially full */
+        fec_init();
+        sendst->fec_data_pc = pc_makeProduconsum(NR_SLICES, "fec data");
 
-	pthread_create(&sendst->fec_thread, NULL, fecMain, sendst);
+        pthread_create(&sendst->fec_thread, NULL, fecMain, sendst);
     }
 #endif
 

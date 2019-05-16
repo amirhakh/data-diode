@@ -25,23 +25,23 @@ int openPipe(struct disk_config *config, int in, int *pid);
 int localReader(struct fifo *fifo, int in);
 
 int spawnNetSender(struct fifo *fifo,
-		   int sock,
-		   struct net_config *config,
-		   participantsDb_t db,
-		   sender_stats_t stats);
+                   int sock,
+                   struct net_config *config,
+                   participantsDb_t db,
+                   sender_stats_t stats);
 void sendHello(struct net_config *net_config, int sock, int streaming);
 
 int openMainSenderSock(struct net_config *net_config,
-		       const char *ifName);
+                       const char *ifName);
 
 int startSender(struct disk_config *disk_config,
-		struct net_config *net_config,
-		struct stat_config *stat_config,
-		int mainSock);
+                struct net_config *net_config,
+                struct stat_config *stat_config,
+                int mainSock);
 
 
 #define BCAST_DATA(s, msg) \
-	doSend(s, &msg, sizeof(msg), &net_config->dataMcastAddr)
+    doSend(s, &msg, sizeof(msg), &net_config->dataMcastAddr)
 
 
 /**

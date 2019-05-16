@@ -19,9 +19,9 @@ enum opCode {
     CMD_DISCONNECT,  /* receiver wants to disconnect itself */
 
     CMD_UNUSED,	     /* obsolete version of CMD_HELLO, dating back to the
-		      * time when we had little endianness (PC). This
-		      * opcode contained a long unnoticed bug with parsing of
-		      * blocksize */
+              * time when we had little endianness (PC). This
+              * opcode contained a long unnoticed bug with parsing of
+              * blocksize */
 
     /* Sender to receiver */
     CMD_REQACK,	     /* server request acknowledgments from receiver */
@@ -46,34 +46,34 @@ enum opCode {
 union message {
     unsigned short opCode;
     struct ok {
-	unsigned short opCode;
-	short reserved;
-	int sliceNo;
+        unsigned short opCode;
+        short reserved;
+        int sliceNo;
     } ok;
 
     struct retransmit {
-	unsigned short opCode;
-	short reserved;
-	int sliceNo;
-	int rxmit;
-	unsigned char map[MAX_SLICE_SIZE / BITS_PER_CHAR];
+        unsigned short opCode;
+        short reserved;
+        int sliceNo;
+        int rxmit;
+        unsigned char map[MAX_SLICE_SIZE / BITS_PER_CHAR];
     } retransmit;
 
     struct connectReq {
-	unsigned short opCode;
-	short reserved;
-	int capabilities;
-	unsigned int rcvbuf;
+        unsigned short opCode;
+        short reserved;
+        int capabilities;
+        unsigned int rcvbuf;
     } connectReq;
 
     struct go {
-	unsigned short opCode;
-	short reserved;
+        unsigned short opCode;
+        short reserved;
     } go;
 
     struct disconnect {
-	unsigned short opCode;
-	short reserved;
+        unsigned short opCode;
+        short reserved;
     } disconnect;
 };
 
@@ -170,13 +170,13 @@ union serverDataMsg {
 
 /* Sender currently supports CAPABILITIES and MULTICAST */
 #define SENDER_CAPABILITIES ( \
-	CAP_NEW_GEN | \
-	CAP_BIG_ENDIAN)
+    CAP_NEW_GEN | \
+    CAP_BIG_ENDIAN)
 
 
 #define RECEIVER_CAPABILITIES ( \
-	CAP_NEW_GEN | \
-	CAP_BIG_ENDIAN)
+    CAP_NEW_GEN | \
+    CAP_BIG_ENDIAN)
 
 
 #endif

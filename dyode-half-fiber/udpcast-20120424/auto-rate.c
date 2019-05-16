@@ -16,17 +16,17 @@
 #ifdef FLAG_AUTORATE
 
 struct auto_rate_t {
-  int isInitialized; /* has this already been initialized? */
-  int dir; /* 1 if TIOCOUTQ is remaining space, 
-	    * 0 if TIOCOUTQ is consumed space */
-  int sendbuf; /* sendbuf */
+    int isInitialized; /* has this already been initialized? */
+    int dir; /* 1 if TIOCOUTQ is remaining space,
+        * 0 if TIOCOUTQ is consumed space */
+    int sendbuf; /* sendbuf */
 };
 
 static int getCurrentQueueLength(int sock) {
 #ifdef TIOCOUTQ
     int length;
     if(ioctl(sock, TIOCOUTQ, &length) < 0)
-	return -1;
+        return -1;
     return length;
 #else
     return -1;
@@ -36,21 +36,21 @@ static int getCurrentQueueLength(int sock) {
 static void *allocAutoRate(void) {
     struct auto_rate_t *autoRate_l = MALLOC(struct auto_rate_t);
     if(autoRate_l == NULL)
-	    return NULL;
+        return NULL;
     autoRate_l->isInitialized = 0;
     return autoRate_l;
 }
 
 static void initialize(struct auto_rate_t *autoRate_l, int sock) {
-  int q = getCurrentQueueLength(sock);
-  if(q == 0) {
-    autoRate_l->dir = 0;
-    autoRate_l->sendbuf = getSendBuf(sock);
-  } else {
-    autoRate_l->dir = 1;
-    autoRate_l->sendbuf = q;
-  }
-  autoRate_l->isInitialized=1;
+    int q = getCurrentQueueLength(sock);
+    if(q == 0) {
+        autoRate_l->dir = 0;
+        autoRate_l->sendbuf = getSendBuf(sock);
+    } else {
+        autoRate_l->dir = 1;
+        autoRate_l->sendbuf = q;
+    }
+    autoRate_l->isInitialized=1;
 }
 
 /**
@@ -62,19 +62,19 @@ static void doAutoRate(void *data, int sock, in_addr_t ip, long size)
     (void) ip;
 
     if(!autoRate_l->isInitialized)
-      initialize(autoRate_l, sock);
+        initialize(autoRate_l, sock);
 
     while(1) {
-	int r = getCurrentQueueLength(sock);
-	if(autoRate_l->dir)
-	    r = autoRate_l->sendbuf - r;
+        int r = getCurrentQueueLength(sock);
+        if(autoRate_l->dir)
+            r = autoRate_l->sendbuf - r;
 
-	if(r < autoRate_l->sendbuf / 2 - size)
-	    return;
+        if(r < autoRate_l->sendbuf / 2 - size)
+            return;
 #if DEBUG
-	flprintf("Queue full %d/%d... Waiting\n", r, autoRate_l->sendbuf);
+        flprintf("Queue full %d/%d... Waiting\n", r, autoRate_l->sendbuf);
 #endif
-	usleep(2500);
+        usleep(2500);
     }
 }
 

@@ -43,7 +43,7 @@ struct disk_config {
 
 struct net_config {
     net_if_t *net_if; /* Network interface (eth0, isdn0, etc.) on which to
-		       * multicast */
+               * multicast */
     int portBase; /* Port base */
     int blockSize;
     int sliceSize;
@@ -59,8 +59,8 @@ struct net_config {
     struct timeval ref_tv;
 
     enum discovery {
-	DSC_DOUBLING,
-	DSC_REDUCING
+        DSC_DOUBLING,
+        DSC_REDUCING
     } discovery;
 
     /* int autoRate; do queue watching using TIOCOUTQ, to avoid overruns */
@@ -74,8 +74,8 @@ struct net_config {
     unsigned int rcvbuf;
 
     int rexmit_hello_interval; /* retransmission interval between hello's.
-				* If 0, hello message won't be retransmitted
-				*/
+                * If 0, hello message won't be retransmitted
+                */
     int autostart; /* autostart after that many retransmits */
 
     int requestedBufSize; /* requested receiver buffer */
@@ -101,7 +101,7 @@ struct net_config {
 #endif
 
     int rehelloOffset; /* how far before end will rehello packet will
-			  be retransmitted */
+              be retransmitted */
 };
 
 struct stat_config {

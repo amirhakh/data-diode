@@ -32,20 +32,20 @@ struct fifo;
 #define startReceiver udpc_startReceiver
 
 int spawnNetReceiver(struct fifo *fifo,
-		     struct client_config *client_config,
-		     struct net_config *net_config,
-		     receiver_stats_t stats);
+                     struct client_config *client_config,
+                     struct net_config *net_config,
+                     receiver_stats_t stats);
 int writer(struct fifo *fifo, int fd);
 int openPipe(int disk, 
-	     struct disk_config *disk_config,
-	     int *pipePid);
+             struct disk_config *disk_config,
+             int *pipePid);
 int sendGo(struct client_config *);
 void sendDisconnect(int, struct client_config *);
 int startReceiver(int doWarn,
-		  struct disk_config *disk_config,
-		  struct net_config *net_config,
-		  struct stat_config *stat_config,
-		  const char *ifName);
+                  struct disk_config *disk_config,
+                  struct net_config *net_config,
+                  struct stat_config *stat_config,
+                  const char *ifName);
 
 #define SSEND(x) SEND(client_config->S_UCAST, x, client_config->serverAddr)
 

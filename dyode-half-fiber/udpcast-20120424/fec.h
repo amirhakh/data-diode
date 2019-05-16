@@ -1,6 +1,8 @@
 #ifndef FEC_H
 #define FEC_H
 
+#include "config.h"
+
 #ifdef BB_FEATURE_UDPCAST_FEC
 
 #undef HAVE_STDINT_H

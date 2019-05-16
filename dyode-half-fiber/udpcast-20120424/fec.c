@@ -33,6 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  */
+#include "fec.h"
 
 #ifdef BB_FEATURE_UDPCAST_FEC
 
@@ -49,7 +50,6 @@
 #include <string.h>
 
 #include <assert.h>
-#include "fec.h"
 #include "socklib.h"
 
 /*
@@ -63,19 +63,19 @@
 
 #include <sys/time.h>
 #define DIFF_T(a,b) \
-	(1+ 1000000*(a.tv_sec - b.tv_sec) + (a.tv_usec - b.tv_usec) )
+    (1+ 1000000*(a.tv_sec - b.tv_sec) + (a.tv_usec - b.tv_usec) )
 
 #define TICK(t) \
-	{struct timeval x ; \
-	gettimeofday(&x, NULL) ; \
-	t = x.tv_usec + 1000000* (x.tv_sec & 0xff ) ; \
-	}
+{struct timeval x ; \
+    gettimeofday(&x, NULL) ; \
+    t = x.tv_usec + 1000000* (x.tv_sec & 0xff ) ; \
+    }
 #define TOCK(t) \
-	{ u_long t1 ; TICK(t1) ; \
-	  if (t1 < t) t = 256000000 + t1 - t ; \
-	  else t = t1 - t ; \
-	  if (t == 0) t = 1 ;}
-	
+{ u_long t1 ; TICK(t1) ; \
+    if (t1 < t) t = 256000000 + t1 - t ; \
+    else t = t1 - t ; \
+    if (t == 0) t = 1 ;}
+
 u_long ticks[10];	/* vars for timekeeping */
 #else
 #define DEB(x)
@@ -110,24 +110,24 @@ typedef unsigned char gf;
  * and  Lee & Messerschmitt, p. 453.
  */
 static char *allPp[] = {    /* GF_BITS	polynomial		*/
-    NULL,		    /*  0	no code			*/
-    NULL,		    /*  1	no code			*/
-    "111",		    /*  2	1+x+x^2			*/
-    "1101",		    /*  3	1+x+x^3			*/
-    "11001",		    /*  4	1+x+x^4			*/
-    "101001",		    /*  5	1+x^2+x^5		*/
-    "1100001",		    /*  6	1+x+x^6			*/
-    "10010001",		    /*  7	1 + x^3 + x^7		*/
-    "101110001",	    /*  8	1+x^2+x^3+x^4+x^8	*/
-    "1000100001",	    /*  9	1+x^4+x^9		*/
-    "10010000001",	    /* 10	1+x^3+x^10		*/
-    "101000000001",	    /* 11	1+x^2+x^11		*/
-    "1100101000001",	    /* 12	1+x+x^4+x^6+x^12	*/
-    "11011000000001",	    /* 13	1+x+x^3+x^4+x^13	*/
-    "110000100010001",	    /* 14	1+x+x^6+x^10+x^14	*/
-    "1100000000000001",	    /* 15	1+x+x^15		*/
-    "11010000000010001"	    /* 16	1+x+x^3+x^12+x^16	*/
-};
+                            NULL,		    /*  0	no code			*/
+                            NULL,		    /*  1	no code			*/
+                            "111",		    /*  2	1+x+x^2			*/
+                            "1101",		    /*  3	1+x+x^3			*/
+                            "11001",		    /*  4	1+x+x^4			*/
+                            "101001",		    /*  5	1+x^2+x^5		*/
+                            "1100001",		    /*  6	1+x+x^6			*/
+                            "10010001",		    /*  7	1 + x^3 + x^7		*/
+                            "101110001",	    /*  8	1+x^2+x^3+x^4+x^8	*/
+                            "1000100001",	    /*  9	1+x^4+x^9		*/
+                            "10010000001",	    /* 10	1+x^3+x^10		*/
+                            "101000000001",	    /* 11	1+x^2+x^11		*/
+                            "1100101000001",	    /* 12	1+x+x^4+x^6+x^12	*/
+                            "11011000000001",	    /* 13	1+x+x^3+x^4+x^13	*/
+                            "110000100010001",	    /* 14	1+x+x^6+x^10+x^14	*/
+                            "1100000000000001",	    /* 15	1+x+x^15		*/
+                            "11010000000010001"	    /* 16	1+x+x^3+x^12+x^16	*/
+                       };
 
 
 /*
@@ -142,7 +142,7 @@ static char *allPp[] = {    /* GF_BITS	polynomial		*/
 static gf gf_exp[2*GF_SIZE];	/* index->poly form conversion table	*/
 static int gf_log[GF_SIZE + 1];	/* Poly->index form conversion table	*/
 static gf inverse[GF_SIZE+1];	/* inverse of field elem.		*/
-				/* inv[\alpha**i]=\alpha**(GF_SIZE-i-1)	*/
+/* inv[\alpha**i]=\alpha**(GF_SIZE-i-1)	*/
 
 /*
  * modnn(x) computes x % GF_SIZE, where GF_SIZE is 2**GF_BITS - 1,
@@ -152,8 +152,8 @@ static inline gf
 modnn(int x)
 {
     while (x >= GF_SIZE) {
-	x -= GF_SIZE;
-	x = (x >> GF_BITS) + (x & GF_SIZE);
+        x -= GF_SIZE;
+        x = (x >> GF_BITS) + (x & GF_SIZE);
     }
     return x;
 }
@@ -190,11 +190,11 @@ init_mul_table(void)
 {
     int i, j;
     for (i=0; i< GF_SIZE+1; i++)
-	for (j=0; j< GF_SIZE+1; j++)
-	    gf_mul_table[(i<<8)+j] = gf_exp[modnn(gf_log[i] + gf_log[j]) ] ;
+        for (j=0; j< GF_SIZE+1; j++)
+            gf_mul_table[(i<<8)+j] = gf_exp[modnn(gf_log[i] + gf_log[j]) ] ;
 
     for (j=0; j< GF_SIZE+1; j++)
-	gf_mul_table[j] = gf_mul_table[j<<8] = 0;
+        gf_mul_table[j] = gf_mul_table[j<<8] = 0;
 }
 
 /*
@@ -229,14 +229,14 @@ generate_gf(void)
      * The first GF_BITS powers are simply bits shifted to the left.
      */
     for (i = 0; i < GF_BITS; i++, mask <<= 1 ) {
-	gf_exp[i] = mask;
-	gf_log[gf_exp[i]] = i;
-	/*
-	 * If Pp[i] == 1 then \alpha ** i occurs in poly-repr
-	 * gf_exp[GF_BITS] = \alpha ** GF_BITS
-	 */
-	if ( Pp[i] == '1' )
-	    gf_exp[GF_BITS] ^= mask;
+        gf_exp[i] = mask;
+        gf_log[gf_exp[i]] = i;
+        /*
+     * If Pp[i] == 1 then \alpha ** i occurs in poly-repr
+     * gf_exp[GF_BITS] = \alpha ** GF_BITS
+     */
+        if ( Pp[i] == '1' )
+            gf_exp[GF_BITS] ^= mask;
     }
     /*
      * now gf_exp[GF_BITS] = \alpha ** GF_BITS is complete, so can als
@@ -251,11 +251,11 @@ generate_gf(void)
      */
     mask = 1 << (GF_BITS - 1 ) ;
     for (i = GF_BITS + 1; i < GF_SIZE; i++) {
-	if (gf_exp[i - 1] >= mask)
-	    gf_exp[i] = gf_exp[GF_BITS] ^ ((gf_exp[i - 1] ^ mask) << 1);
-	else
-	    gf_exp[i] = gf_exp[i - 1] << 1;
-	gf_log[gf_exp[i]] = i;
+        if (gf_exp[i - 1] >= mask)
+            gf_exp[i] = gf_exp[GF_BITS] ^ ((gf_exp[i - 1] ^ mask) << 1);
+        else
+            gf_exp[i] = gf_exp[i - 1] << 1;
+        gf_log[gf_exp[i]] = i;
     }
     /*
      * log(0) is not defined, so use a special value
@@ -263,7 +263,7 @@ generate_gf(void)
     gf_log[0] =	GF_SIZE ;
     /* set the extended gf_exp values for fast multiply */
     for (i = 0 ; i < GF_SIZE ; i++)
-	gf_exp[i + GF_SIZE] = gf_exp[i] ;
+        gf_exp[i + GF_SIZE] = gf_exp[i] ;
 
     /*
      * again special cases. 0 has no inverse. This used to
@@ -273,7 +273,7 @@ generate_gf(void)
     inverse[0] = 0 ;
     inverse[1] = 1;
     for (i=2; i<=GF_SIZE; i++)
-	inverse[i] = gf_exp[GF_SIZE-gf_log[i]];
+        inverse[i] = gf_exp[GF_SIZE-gf_log[i]];
 }
 
 /*
@@ -286,7 +286,7 @@ generate_gf(void)
  * unrolled 16 times, a good value for 486 and pentium-class machines.
  * The case c=0 is also optimized, whereas c=1 is not. These
  * calls are unfrequent in my typical apps so I did not bother.
- * 
+ *
  * Note that gcc on
  */
 #if 0
@@ -308,31 +308,31 @@ slow_addmul1(gf *dst1, gf *src1, gf c, int sz)
 
 #if (UNROLL > 1) /* unrolling by 8/16 is quite effective on the pentium */
     for (; dst < lim ; dst += UNROLL, src += UNROLL ) {
-	GF_ADDMULC( dst[0] , src[0] );
-	GF_ADDMULC( dst[1] , src[1] );
-	GF_ADDMULC( dst[2] , src[2] );
-	GF_ADDMULC( dst[3] , src[3] );
+        GF_ADDMULC( dst[0] , src[0] );
+        GF_ADDMULC( dst[1] , src[1] );
+        GF_ADDMULC( dst[2] , src[2] );
+        GF_ADDMULC( dst[3] , src[3] );
 #if (UNROLL > 4)
-	GF_ADDMULC( dst[4] , src[4] );
-	GF_ADDMULC( dst[5] , src[5] );
-	GF_ADDMULC( dst[6] , src[6] );
-	GF_ADDMULC( dst[7] , src[7] );
+        GF_ADDMULC( dst[4] , src[4] );
+        GF_ADDMULC( dst[5] , src[5] );
+        GF_ADDMULC( dst[6] , src[6] );
+        GF_ADDMULC( dst[7] , src[7] );
 #endif
 #if (UNROLL > 8)
-	GF_ADDMULC( dst[8] , src[8] );
-	GF_ADDMULC( dst[9] , src[9] );
-	GF_ADDMULC( dst[10] , src[10] );
-	GF_ADDMULC( dst[11] , src[11] );
-	GF_ADDMULC( dst[12] , src[12] );
-	GF_ADDMULC( dst[13] , src[13] );
-	GF_ADDMULC( dst[14] , src[14] );
-	GF_ADDMULC( dst[15] , src[15] );
+        GF_ADDMULC( dst[8] , src[8] );
+        GF_ADDMULC( dst[9] , src[9] );
+        GF_ADDMULC( dst[10] , src[10] );
+        GF_ADDMULC( dst[11] , src[11] );
+        GF_ADDMULC( dst[12] , src[12] );
+        GF_ADDMULC( dst[13] , src[13] );
+        GF_ADDMULC( dst[14] , src[14] );
+        GF_ADDMULC( dst[15] , src[15] );
 #endif
     }
 #endif
     lim += UNROLL - 1 ;
     for (; dst < lim; dst++, src++ )		/* final components */
-	GF_ADDMULC( *dst , *src );
+        GF_ADDMULC( *dst , *src );
 }
 
 #if defined i386 && defined USE_ASSEMBLER
@@ -346,58 +346,58 @@ addmul1(gf *dst1, gf *src1, gf c, int sz)
 
     GF_MULC0(c) ;
 
-    if(((unsigned long)dst1 % LOOPSIZE) || 
-       ((unsigned long)src1 % LOOPSIZE) || 
-       (sz % LOOPSIZE)) {
-	slow_addmul1(dst1, src1, c, sz);
-	return;
+    if(((unsigned long)dst1 % LOOPSIZE) ||
+            ((unsigned long)src1 % LOOPSIZE) ||
+            (sz % LOOPSIZE)) {
+        slow_addmul1(dst1, src1, c, sz);
+        return;
     }
 
     asm volatile("xorl %%eax,%%eax;\n"
-		 "	xorl %%edx,%%edx;\n"
-		 ".align 32;\n"
-		 "1:"
-		 "	addl  $8, %%edi;\n"
-		 
-		 "	movb  (%%esi), %%al;\n"
-		 "	movb 4(%%esi), %%dl;\n"
-		 "	movb  (%%ebx,%%eax), %%al;\n"
-		 "	movb  (%%ebx,%%edx), %%dl;\n"
-		 "	xorb  %%al,  (%%edi);\n"
-		 "	xorb  %%dl, 4(%%edi);\n"
-		 
-		 "	movb 1(%%esi), %%al;\n"
-		 "	movb 5(%%esi), %%dl;\n"
-		 "	movb  (%%ebx,%%eax), %%al;\n"
-		 "	movb  (%%ebx,%%edx), %%dl;\n"
-		 "	xorb  %%al, 1(%%edi);\n"
-		 "	xorb  %%dl, 5(%%edi);\n"
-		 
-		 "	movb 2(%%esi), %%al;\n"
-		 "	movb 6(%%esi), %%dl;\n"
-		 "	movb  (%%ebx,%%eax), %%al;\n"
-		 "	movb  (%%ebx,%%edx), %%dl;\n"
-		 "	xorb  %%al, 2(%%edi);\n"
-		 "	xorb  %%dl, 6(%%edi);\n"
-		 
-		 "	movb 3(%%esi), %%al;\n"
-		 "	movb 7(%%esi), %%dl;\n"
-		 "	addl  $8, %%esi;\n"
-		 "	movb  (%%ebx,%%eax), %%al;\n"
-		 "	movb  (%%ebx,%%edx), %%dl;\n"
-		 "	xorb  %%al, 3(%%edi);\n"
-		 "	xorb  %%dl, 7(%%edi);\n"
-		 
-		 "	cmpl  %%ecx, %%esi;\n"
-		 "	jb 1b;"
-		 : : 
-		 
-		 "b" (__gf_mulc_),
-		 "D" (dst1-8),
-		 "S" (src1),
-		 "c" (sz+src1) :
-		 "memory", "eax", "edx"
-	);
+                 "	xorl %%edx,%%edx;\n"
+                 ".align 32;\n"
+                 "1:"
+                 "	addl  $8, %%edi;\n"
+
+                 "	movb  (%%esi), %%al;\n"
+                 "	movb 4(%%esi), %%dl;\n"
+                 "	movb  (%%ebx,%%eax), %%al;\n"
+                 "	movb  (%%ebx,%%edx), %%dl;\n"
+                 "	xorb  %%al,  (%%edi);\n"
+                 "	xorb  %%dl, 4(%%edi);\n"
+
+                 "	movb 1(%%esi), %%al;\n"
+                 "	movb 5(%%esi), %%dl;\n"
+                 "	movb  (%%ebx,%%eax), %%al;\n"
+                 "	movb  (%%ebx,%%edx), %%dl;\n"
+                 "	xorb  %%al, 1(%%edi);\n"
+                 "	xorb  %%dl, 5(%%edi);\n"
+
+                 "	movb 2(%%esi), %%al;\n"
+                 "	movb 6(%%esi), %%dl;\n"
+                 "	movb  (%%ebx,%%eax), %%al;\n"
+                 "	movb  (%%ebx,%%edx), %%dl;\n"
+                 "	xorb  %%al, 2(%%edi);\n"
+                 "	xorb  %%dl, 6(%%edi);\n"
+
+                 "	movb 3(%%esi), %%al;\n"
+                 "	movb 7(%%esi), %%dl;\n"
+                 "	addl  $8, %%esi;\n"
+                 "	movb  (%%ebx,%%eax), %%al;\n"
+                 "	movb  (%%ebx,%%edx), %%dl;\n"
+                 "	xorb  %%al, 3(%%edi);\n"
+                 "	xorb  %%dl, 7(%%edi);\n"
+
+                 "	cmpl  %%ecx, %%esi;\n"
+                 "	jb 1b;"
+                 : :
+
+                 "b" (__gf_mulc_),
+                 "D" (dst1-8),
+                 "S" (src1),
+                 "c" (sz+src1) :
+                 "memory", "eax", "edx"
+                 );
 }
 #else
 # define addmul1 slow_addmul1
@@ -414,7 +414,7 @@ static void addmul(gf *dst, gf *src, gf c, int sz) {
  * unrolled 16 times, a good value for 486 and pentium-class machines.
  * The case c=0 is also optimized, whereas c=1 is not. These
  * calls are unfrequent in my typical apps so I did not bother.
- * 
+ *
  * Note that gcc on
  */
 #if 0
@@ -434,31 +434,31 @@ slow_mul1(gf *dst1, gf *src1, gf c, int sz)
 
 #if (UNROLL > 1) /* unrolling by 8/16 is quite effective on the pentium */
     for (; dst < lim ; dst += UNROLL, src += UNROLL ) {
-	GF_MULC( dst[0] , src[0] );
-	GF_MULC( dst[1] , src[1] );
-	GF_MULC( dst[2] , src[2] );
-	GF_MULC( dst[3] , src[3] );
+        GF_MULC( dst[0] , src[0] );
+        GF_MULC( dst[1] , src[1] );
+        GF_MULC( dst[2] , src[2] );
+        GF_MULC( dst[3] , src[3] );
 #if (UNROLL > 4)
-	GF_MULC( dst[4] , src[4] );
-	GF_MULC( dst[5] , src[5] );
-	GF_MULC( dst[6] , src[6] );
-	GF_MULC( dst[7] , src[7] );
+        GF_MULC( dst[4] , src[4] );
+        GF_MULC( dst[5] , src[5] );
+        GF_MULC( dst[6] , src[6] );
+        GF_MULC( dst[7] , src[7] );
 #endif
 #if (UNROLL > 8)
-	GF_MULC( dst[8] , src[8] );
-	GF_MULC( dst[9] , src[9] );
-	GF_MULC( dst[10] , src[10] );
-	GF_MULC( dst[11] , src[11] );
-	GF_MULC( dst[12] , src[12] );
-	GF_MULC( dst[13] , src[13] );
-	GF_MULC( dst[14] , src[14] );
-	GF_MULC( dst[15] , src[15] );
+        GF_MULC( dst[8] , src[8] );
+        GF_MULC( dst[9] , src[9] );
+        GF_MULC( dst[10] , src[10] );
+        GF_MULC( dst[11] , src[11] );
+        GF_MULC( dst[12] , src[12] );
+        GF_MULC( dst[13] , src[13] );
+        GF_MULC( dst[14] , src[14] );
+        GF_MULC( dst[15] , src[15] );
 #endif
     }
 #endif
     lim += UNROLL - 1 ;
     for (; dst < lim; dst++, src++ )		/* final components */
-	GF_MULC( *dst , *src );
+        GF_MULC( *dst , *src );
 }
 
 #if defined i386 && defined USE_ASSEMBLER
@@ -469,61 +469,61 @@ mul1(gf *dst1, gf *src1, gf c, int sz)
 
     GF_MULC0(c) ;
 
-    if(((unsigned long)dst1 % LOOPSIZE) || 
-       ((unsigned long)src1 % LOOPSIZE) || 
-       (sz % LOOPSIZE)) {
-	slow_mul1(dst1, src1, c, sz);
-	return;
+    if(((unsigned long)dst1 % LOOPSIZE) ||
+            ((unsigned long)src1 % LOOPSIZE) ||
+            (sz % LOOPSIZE)) {
+        slow_mul1(dst1, src1, c, sz);
+        return;
     }
 
     asm volatile("pushl %%eax;\n"
-		 "pushl %%edx;\n"
-		 "xorl %%eax,%%eax;\n"
-		 "	xorl %%edx,%%edx;\n"
-		 "1:"
-		 "	addl  $8, %%edi;\n"
-		 
-		 "	movb  (%%esi), %%al;\n"
-		 "	movb 4(%%esi), %%dl;\n"
-		 "	movb  (%%ebx,%%eax), %%al;\n"
-		 "	movb  (%%ebx,%%edx), %%dl;\n"
-		 "	movb  %%al,  (%%edi);\n"
-		 "	movb  %%dl, 4(%%edi);\n"
-		 
-		 "	movb 1(%%esi), %%al;\n"
-		 "	movb 5(%%esi), %%dl;\n"
-		 "	movb  (%%ebx,%%eax), %%al;\n"
-		 "	movb  (%%ebx,%%edx), %%dl;\n"
-		 "	movb  %%al, 1(%%edi);\n"
-		 "	movb  %%dl, 5(%%edi);\n"
-		 
-		 "	movb 2(%%esi), %%al;\n"
-		 "	movb 6(%%esi), %%dl;\n"
-		 "	movb  (%%ebx,%%eax), %%al;\n"
-		 "	movb  (%%ebx,%%edx), %%dl;\n"
-		 "	movb  %%al, 2(%%edi);\n"
-		 "	movb  %%dl, 6(%%edi);\n"
-		 
-		 "	movb 3(%%esi), %%al;\n"
-		 "	movb 7(%%esi), %%dl;\n"
-		 "	addl  $8, %%esi;\n"
-		 "	movb  (%%ebx,%%eax), %%al;\n"
-		 "	movb  (%%ebx,%%edx), %%dl;\n"
-		 "	movb  %%al, 3(%%edi);\n"
-		 "	movb  %%dl, 7(%%edi);\n"
-		 
-		 "	cmpl  %%ecx, %%esi;\n"
-		 "	jb 1b;\n"
-		 "	popl %%edx;\n"
-		 "	popl %%eax;"
-		 : : 
-		 
-		 "b" (__gf_mulc_),
-		 "D" (dst1-8),
-		 "S" (src1),
-		 "c" (sz+src1) :
-		 "memory", "eax", "edx"
-	);
+                 "pushl %%edx;\n"
+                 "xorl %%eax,%%eax;\n"
+                 "	xorl %%edx,%%edx;\n"
+                 "1:"
+                 "	addl  $8, %%edi;\n"
+
+                 "	movb  (%%esi), %%al;\n"
+                 "	movb 4(%%esi), %%dl;\n"
+                 "	movb  (%%ebx,%%eax), %%al;\n"
+                 "	movb  (%%ebx,%%edx), %%dl;\n"
+                 "	movb  %%al,  (%%edi);\n"
+                 "	movb  %%dl, 4(%%edi);\n"
+
+                 "	movb 1(%%esi), %%al;\n"
+                 "	movb 5(%%esi), %%dl;\n"
+                 "	movb  (%%ebx,%%eax), %%al;\n"
+                 "	movb  (%%ebx,%%edx), %%dl;\n"
+                 "	movb  %%al, 1(%%edi);\n"
+                 "	movb  %%dl, 5(%%edi);\n"
+
+                 "	movb 2(%%esi), %%al;\n"
+                 "	movb 6(%%esi), %%dl;\n"
+                 "	movb  (%%ebx,%%eax), %%al;\n"
+                 "	movb  (%%ebx,%%edx), %%dl;\n"
+                 "	movb  %%al, 2(%%edi);\n"
+                 "	movb  %%dl, 6(%%edi);\n"
+
+                 "	movb 3(%%esi), %%al;\n"
+                 "	movb 7(%%esi), %%dl;\n"
+                 "	addl  $8, %%esi;\n"
+                 "	movb  (%%ebx,%%eax), %%al;\n"
+                 "	movb  (%%ebx,%%edx), %%dl;\n"
+                 "	movb  %%al, 3(%%edi);\n"
+                 "	movb  %%dl, 7(%%edi);\n"
+
+                 "	cmpl  %%ecx, %%esi;\n"
+                 "	jb 1b;\n"
+                 "	popl %%edx;\n"
+                 "	popl %%eax;"
+                 : :
+
+                 "b" (__gf_mulc_),
+                 "D" (dst1-8),
+                 "S" (src1),
+                 "c" (sz+src1) :
+                 "memory", "eax", "edx"
+                 );
 }
 #else
 # define mul1 slow_mul1
@@ -541,7 +541,7 @@ static inline void mul(gf *dst, gf *src, gf c, int sz) {
  * Return non-zero if singular.
  */
 DEB( int pivloops=0; int pivswaps=0 ; /* diagnostic */)
-    static int
+static int
 invert_mat(gf *src, int k)
 {
     gf c, *p ;
@@ -555,109 +555,109 @@ invert_mat(gf *src, int k)
 
     memset(id_row, 0, k*sizeof(gf));
     DEB( pivloops=0; pivswaps=0 ; /* diagnostic */ )
-	/*
-	 * ipiv marks elements already used as pivots.
-	 */
-	for (i = 0; i < k ; i++)
-	    ipiv[i] = 0 ;
+    /*
+     * ipiv marks elements already used as pivots.
+     */
+    for (i = 0; i < k ; i++)
+        ipiv[i] = 0 ;
 
     for (col = 0; col < k ; col++) {
-	gf *pivot_row ;
-	/*
-	 * Zeroing column 'col', look for a non-zero element.
-	 * First try on the diagonal, if it fails, look elsewhere.
-	 */
-	irow = icol = -1 ;
-	if (ipiv[col] != 1 && src[col*k + col] != 0) {
-	    irow = col ;
-	    icol = col ;
-	    goto found_piv ;
-	}
-	for (row = 0 ; row < k ; row++) {
-	    if (ipiv[row] != 1) {
-		for (ix = 0 ; ix < k ; ix++) {
-		    DEB( pivloops++ ; )
-			if (ipiv[ix] == 0) {
-			    if (src[row*k + ix] != 0) {
-				irow = row ;
-				icol = ix ;
-				goto found_piv ;
-			    }
-			} else if (ipiv[ix] > 1) {
-			    fprintf(stderr, "singular matrix\n");
-			    goto fail ; 
-			}
-		}
-	    }
-	}
-	if (icol == -1) {
-	    fprintf(stderr, "XXX pivot not found!\n");
-	    goto fail ;
-	}
- found_piv:
-	++(ipiv[icol]) ;
-	/*
-	 * swap rows irow and icol, so afterwards the diagonal
-	 * element will be correct. Rarely done, not worth
-	 * optimizing.
-	 */
-	if (irow != icol) {
-	    for (ix = 0 ; ix < k ; ix++ ) {
-		SWAP( src[irow*k + ix], src[icol*k + ix], gf) ;
-	    }
-	}
-	indxr[col] = irow ;
-	indxc[col] = icol ;
-	pivot_row = &src[icol*k] ;
-	c = pivot_row[icol] ;
-	if (c == 0) {
-	    fprintf(stderr, "singular matrix 2\n");
-	    goto fail ;
-	}
-	if (c != 1 ) { /* otherwhise this is a NOP */
-	    /*
-	     * this is done often , but optimizing is not so
-	     * fruitful, at least in the obvious ways (unrolling)
-	     */
-	    DEB( pivswaps++ ; )
-		c = inverse[ c ] ;
-	    pivot_row[icol] = 1 ;
-	    for (ix = 0 ; ix < k ; ix++ )
-		pivot_row[ix] = gf_mul(c, pivot_row[ix] );
-	}
-	/*
-	 * from all rows, remove multiples of the selected row
-	 * to zero the relevant entry (in fact, the entry is not zero
-	 * because we know it must be zero).
-	 * (Here, if we know that the pivot_row is the identity,
-	 * we can optimize the addmul).
-	 */
-	id_row[icol] = 1;
-	if (memcmp(pivot_row, id_row, k*sizeof(gf)) != 0) {
-	    for (p = src, ix = 0 ; ix < k ; ix++, p += k ) {
-		if (ix != icol) {
-		    c = p[icol] ;
-		    p[icol] = 0 ;
-		    addmul(p, pivot_row, c, k );
-		}
-	    }
-	}
-	id_row[icol] = 0;
+        gf *pivot_row ;
+        /*
+     * Zeroing column 'col', look for a non-zero element.
+     * First try on the diagonal, if it fails, look elsewhere.
+     */
+        irow = icol = -1 ;
+        if (ipiv[col] != 1 && src[col*k + col] != 0) {
+            irow = col ;
+            icol = col ;
+            goto found_piv ;
+        }
+        for (row = 0 ; row < k ; row++) {
+            if (ipiv[row] != 1) {
+                for (ix = 0 ; ix < k ; ix++) {
+                    DEB( pivloops++ ; )
+                            if (ipiv[ix] == 0) {
+                        if (src[row*k + ix] != 0) {
+                            irow = row ;
+                            icol = ix ;
+                            goto found_piv ;
+                        }
+                    } else if (ipiv[ix] > 1) {
+                        fprintf(stderr, "singular matrix\n");
+                        goto fail ;
+                    }
+                }
+            }
+        }
+        if (icol == -1) {
+            fprintf(stderr, "XXX pivot not found!\n");
+            goto fail ;
+        }
+found_piv:
+        ++(ipiv[icol]) ;
+        /*
+     * swap rows irow and icol, so afterwards the diagonal
+     * element will be correct. Rarely done, not worth
+     * optimizing.
+     */
+        if (irow != icol) {
+            for (ix = 0 ; ix < k ; ix++ ) {
+                SWAP( src[irow*k + ix], src[icol*k + ix], gf) ;
+            }
+        }
+        indxr[col] = irow ;
+        indxc[col] = icol ;
+        pivot_row = &src[icol*k] ;
+        c = pivot_row[icol] ;
+        if (c == 0) {
+            fprintf(stderr, "singular matrix 2\n");
+            goto fail ;
+        }
+        if (c != 1 ) { /* otherwhise this is a NOP */
+            /*
+         * this is done often , but optimizing is not so
+         * fruitful, at least in the obvious ways (unrolling)
+         */
+            DEB( pivswaps++ ; )
+                    c = inverse[ c ] ;
+            pivot_row[icol] = 1 ;
+            for (ix = 0 ; ix < k ; ix++ )
+                pivot_row[ix] = gf_mul(c, pivot_row[ix] );
+        }
+        /*
+     * from all rows, remove multiples of the selected row
+     * to zero the relevant entry (in fact, the entry is not zero
+     * because we know it must be zero).
+     * (Here, if we know that the pivot_row is the identity,
+     * we can optimize the addmul).
+     */
+        id_row[icol] = 1;
+        if (memcmp(pivot_row, id_row, k*sizeof(gf)) != 0) {
+            for (p = src, ix = 0 ; ix < k ; ix++, p += k ) {
+                if (ix != icol) {
+                    c = p[icol] ;
+                    p[icol] = 0 ;
+                    addmul(p, pivot_row, c, k );
+                }
+            }
+        }
+        id_row[icol] = 0;
     } /* done all columns */
     for (col = k-1 ; col >= 0 ; col-- ) {
-	if (indxr[col] <0 || indxr[col] >= k)
-	    fprintf(stderr, "AARGH, indxr[col] %d\n", indxr[col]);
-	else if (indxc[col] <0 || indxc[col] >= k)
-	    fprintf(stderr, "AARGH, indxc[col] %d\n", indxc[col]);
-	else
-	    if (indxr[col] != indxc[col] ) {
-		for (row = 0 ; row < k ; row++ ) {
-		    SWAP( src[row*k + indxr[col]], src[row*k + indxc[col]], gf) ;
-		}
-	    }
+        if (indxr[col] <0 || indxr[col] >= k)
+            fprintf(stderr, "AARGH, indxr[col] %d\n", indxr[col]);
+        else if (indxc[col] <0 || indxc[col] >= k)
+            fprintf(stderr, "AARGH, indxc[col] %d\n", indxc[col]);
+        else
+            if (indxr[col] != indxc[col] ) {
+                for (row = 0 ; row < k ; row++ ) {
+                    SWAP( src[row*k + indxr[col]], src[row*k + indxc[col]], gf) ;
+                }
+            }
     }
     error = 0 ;
- fail:
+fail:
     return error ;
 }
 
@@ -670,11 +670,11 @@ void fec_init(void)
     generate_gf();
     TOCK(ticks[0]);
     DDB(fprintf(stderr, "generate_gf took %ldus\n", ticks[0]);)
-	TICK(ticks[0]);
+    TICK(ticks[0]);
     init_mul_table();
     TOCK(ticks[0]);
     DDB(fprintf(stderr, "init_mul_table took %ldus\n", ticks[0]);)
-	fec_initialized = 1 ;
+    fec_initialized = 1 ;
 }
 
 
@@ -708,7 +708,7 @@ void fec_init(void)
  *     col of inverse of top Vandermonde matrix)
  *
  *                _____
- *                 | | 
+ *                 | |
  *   P   =  K      | |    (x - i)
  *    col    col   | |
  *             0 < i < 128 &&
@@ -719,7 +719,7 @@ void fec_init(void)
  *                  1
  *           ---------------
  *   K    =       _____
- *    col          | | 
+ *    col          | |
  *                 | |    (col - i)
  *                 | |
  *             0 < i < 128 &&
@@ -734,13 +734,13 @@ void fec_init(void)
  *
  *     Which make P_col resolves to:
  *               _____
- *                | |    
+ *                | |
  *     P   =  K   | |    (x - i)
  *      col       | |
  *             0 < i < 128
  *           -------------------
  *              (x-col)
- * 
+ *
  *     When evaluating this for any x > 0x80, the following thing happens
  *     to the numerator: all (x-i) are different for i, and have high bit
  *     set. Thus, the set of top factors are all values from 0x80 to 0xff,
@@ -774,30 +774,30 @@ void fec_init(void)
  * in the L2 cache...)
  */
 void fec_encode(unsigned int blockSize,
-		unsigned char **data_blocks,
-		unsigned int nrDataBlocks,
-		unsigned char **fec_blocks,
-		unsigned int nrFecBlocks)
+                unsigned char **data_blocks,
+                unsigned int nrDataBlocks,
+                unsigned char **fec_blocks,
+                unsigned int nrFecBlocks)
 
 {
     unsigned int blockNo; /* loop for block counter */
     unsigned int row, col;
 
-    assert(fec_initialized);    
-    assert(nrDataBlocks <= 128);    
+    assert(fec_initialized);
+    assert(nrDataBlocks <= 128);
     assert(nrFecBlocks <= 128);
 
     if(!nrDataBlocks)
-	return;
+        return;
 
     for(row=0; row < nrFecBlocks; row++)
-	mul(fec_blocks[row], data_blocks[0], inverse[128 ^ row], blockSize);
+        mul(fec_blocks[row], data_blocks[0], inverse[128 ^ row], blockSize);
     
     for(col=129, blockNo=1; blockNo < nrDataBlocks; col++, blockNo ++) {
-	for(row=0; row < nrFecBlocks; row++)
-	    addmul(fec_blocks[row], data_blocks[blockNo],
-		   inverse[row ^ col],
-		   blockSize);
+        for(row=0; row < nrFecBlocks; row++)
+            addmul(fec_blocks[row], data_blocks[blockNo],
+                   inverse[row ^ col],
+                    blockSize);
     }
 }
 
@@ -808,12 +808,12 @@ void fec_encode(unsigned int blockSize,
  * + fec)
  */
 static inline void reduce(unsigned int blockSize,
-			  unsigned char **data_blocks,
-			  unsigned int nr_data_blocks,
-			  unsigned char **fec_blocks,
-			  unsigned int *fec_block_nos,
-			  unsigned int *erased_blocks,
-			  unsigned short nr_fec_blocks)
+                          unsigned char **data_blocks,
+                          unsigned int nr_data_blocks,
+                          unsigned char **fec_blocks,
+                          unsigned int *fec_block_nos,
+                          unsigned int *erased_blocks,
+                          unsigned short nr_fec_blocks)
 {
     int erasedIdx=0;
     unsigned int col;
@@ -821,16 +821,16 @@ static inline void reduce(unsigned int blockSize,
     /* First we reduce the code vector by substracting all known elements
      * (non-erased data packets) */
     for(col=0; col<nr_data_blocks; col++) {
-	if(erasedIdx < nr_fec_blocks && erased_blocks[erasedIdx] == col) {
-	    erasedIdx++;
-	} else {
-	    unsigned char *src = data_blocks[col];
-	    int j;
-	    for(j=0; j < nr_fec_blocks; j++) {
-		int blno = fec_block_nos[j];
-		addmul(fec_blocks[j],src,inverse[blno^col^128],blockSize);
-	    }
-	}
+        if(erasedIdx < nr_fec_blocks && erased_blocks[erasedIdx] == col) {
+            erasedIdx++;
+        } else {
+            unsigned char *src = data_blocks[col];
+            int j;
+            for(j=0; j < nr_fec_blocks; j++) {
+                int blno = fec_block_nos[j];
+                addmul(fec_blocks[j],src,inverse[blno^col^128],blockSize);
+            }
+        }
     }
 
     assert(nr_fec_blocks == erasedIdx);
@@ -854,11 +854,11 @@ long long invTime =0;
  * it, and multiply reduced vector by it.
  */
 static inline void resolve(int blockSize,
-			   unsigned char **data_blocks,
-			   unsigned char **fec_blocks,
-			   unsigned int *fec_block_nos,
-			   unsigned int *erased_blocks,
-			   short nr_fec_blocks)
+                           unsigned char **data_blocks,
+                           unsigned char **fec_blocks,
+                           unsigned int *fec_block_nos,
+                           unsigned int *erased_blocks,
+                           short nr_fec_blocks)
 {
 #ifdef PROFILE
     long long begin;
@@ -874,13 +874,13 @@ static inline void resolve(int blockSize,
      * blocks. This is the matrix by which we would need to multiply the
      * missing data blocks to obtain the FEC blocks we have */
     for(row = 0, ptr=0; row < nr_fec_blocks; row++) {
-	int col;
-	int irow = 128 + fec_block_nos[row];
-	/*assert(irow < fec_blocks+128);*/
-	for(col = 0; col < nr_fec_blocks; col++, ptr++) {
-	    int icol = erased_blocks[col];
-	    matrix[ptr] = inverse[irow ^ icol];
-	}
+        int col;
+        int irow = 128 + fec_block_nos[row];
+        /*assert(irow < fec_blocks+128);*/
+        for(col = 0; col < nr_fec_blocks; col++, ptr++) {
+            int icol = erased_blocks[col];
+            matrix[ptr] = inverse[irow ^ icol];
+        }
     }
 
 #ifdef PROFILE
@@ -892,38 +892,38 @@ static inline void resolve(int blockSize,
 #endif
 
     if(r) {
-	int col;
-	fprintf(stderr,"Pivot not found\n");
-	fprintf(stderr, "Rows: ");
-	for(row=0; row<nr_fec_blocks; row++)
-	    fprintf(stderr, "%d ", 128 + fec_block_nos[row]);
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Columns: ");
-	for(col = 0; col < nr_fec_blocks; col++, ptr++)
-	    fprintf(stderr, "%d ", erased_blocks[col]);
-	fprintf(stderr, "\n");
-	assert(0);
+        int col;
+        fprintf(stderr,"Pivot not found\n");
+        fprintf(stderr, "Rows: ");
+        for(row=0; row<nr_fec_blocks; row++)
+            fprintf(stderr, "%d ", 128 + fec_block_nos[row]);
+        fprintf(stderr, "\n");
+        fprintf(stderr, "Columns: ");
+        for(col = 0; col < nr_fec_blocks; col++, ptr++)
+            fprintf(stderr, "%d ", erased_blocks[col]);
+        fprintf(stderr, "\n");
+        assert(0);
     }
 
     /* do the multiplication with the reduced code vector */
     for(row = 0, ptr=0; row < nr_fec_blocks; row++) {
-	int col;
-	unsigned char *target = data_blocks[erased_blocks[row]];
-	mul(target,fec_blocks[0],matrix[ptr++],blockSize);
-	for(col = 1; col < nr_fec_blocks;  col++,ptr++) {
-	    addmul(target,fec_blocks[col],matrix[ptr],blockSize);
-	}
+        int col;
+        unsigned char *target = data_blocks[erased_blocks[row]];
+        mul(target,fec_blocks[0],matrix[ptr++],blockSize);
+        for(col = 1; col < nr_fec_blocks;  col++,ptr++) {
+            addmul(target,fec_blocks[col],matrix[ptr],blockSize);
+        }
     }
 }
 
 void fec_decode(unsigned int blockSize,
 
-		unsigned char **data_blocks,
-		unsigned int nr_data_blocks,
-		unsigned char **fec_blocks,
-		unsigned int *fec_block_nos,
-		unsigned int *erased_blocks,
-		unsigned short nr_fec_blocks)
+                unsigned char **data_blocks,
+                unsigned int nr_data_blocks,
+                unsigned char **fec_blocks,
+                unsigned int *fec_block_nos,
+                unsigned int *erased_blocks,
+                unsigned short nr_fec_blocks)
 {
 #ifdef PROFILE
     long long begin;
@@ -934,15 +934,15 @@ void fec_decode(unsigned int blockSize,
     begin = rdtsc();
 #endif
     reduce(blockSize, data_blocks, nr_data_blocks,
-	   fec_blocks, fec_block_nos,  erased_blocks, nr_fec_blocks);
+           fec_blocks, fec_block_nos,  erased_blocks, nr_fec_blocks);
 #ifdef PROFILE
     end = rdtsc();
     reduceTime += end - begin;
     begin = end;
 #endif
     resolve(blockSize, data_blocks,
-	    fec_blocks, fec_block_nos, erased_blocks,
-	    nr_fec_blocks);
+            fec_blocks, fec_block_nos, erased_blocks,
+            nr_fec_blocks);
 #ifdef PROFILE
     end = rdtsc();
     resolveTime += end - begin;
@@ -952,71 +952,71 @@ void fec_decode(unsigned int blockSize,
 
 #ifdef PROFILE
 void printDetail(void) {
-    fprintf(stderr, "red=%9lld\nres=%9lld\ninv=%9lld\n",  
-	    reduceTime, resolveTime, invTime);
+    fprintf(stderr, "red=%9lld\nres=%9lld\ninv=%9lld\n",
+            reduceTime, resolveTime, invTime);
 }
 #endif
 
 
 void fec_license(void)
 {
-  fprintf(stderr,
-	  "   udpcast and its FEC code are free software\n"
-	  "\n"
-          "   you can redistribute udpcast core functionality and/or\n"
-	  "   it them under the terms of the GNU General Public License as\n"
-	  "   published by the Free Software Foundation; either version 2 of\n"
-	  "   the License, or (at your option) any later version.\n"
-	  "\n"
-	  "   This program is distributed in the hope that it will be useful,\n"
-	  "   but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-	  "   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-	  "   GNU General Public License for more details.\n"
-	  "\n"
-	  "   You should have received a copy of the GNU General Public License\n"
-	  "   along with this program; see the file COPYING.\n"
-	  "   If not, write to the Free Software Foundation, Inc.,\n"
-	  "   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
-	  "\n"
-	  "   Alain Knaff\n"
-	  "   <alain@knaff.lu>\n"
-	  "   http://udpcast.linux.lu/\n"
-	  "\n"
-	  "the FEC code is covered by the following license:\n"
-	  "fec.c -- forward error correction based on Vandermonde matrices\n"
-	  "980624\n"
-	  "(C) 1997-98 Luigi Rizzo (luigi@iet.unipi.it)\n"
-	  "(C) 2001 Alain Knaff (alain@knaff.lu)\n"
-	  "\n"
-	  "Portions derived from code by Phil Karn (karn@ka9q.ampr.org),\n"
-	  "Robert Morelos-Zaragoza (robert@spectra.eng.hawaii.edu) and Hari\n"
-	  "Thirumoorthy (harit@spectra.eng.hawaii.edu), Aug 1995\n"
-	  "\n"
-	  "Redistribution and use in source and binary forms, with or without\n"
-	  "modification, are permitted provided that the following conditions\n"
-	  "are met:\n"
-	  "\n"
-	  "1. Redistributions of source code must retain the above copyright\n"
-	  "   notice, this list of conditions and the following disclaimer.\n"
-	  "2. Redistributions in binary form must reproduce the above\n"
-	  "   copyright notice, this list of conditions and the following\n"
-	  "   disclaimer in the documentation and/or other materials\n"
-	  "   provided with the distribution.\n"
-	  "\n"
-	  "THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND\n"
-	  "ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,\n"
-	  "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A\n"
-	  "PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS\n"
-	  "BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,\n"
-	  "OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\n"
-	  "PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,\n"
-	  "OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n"
-	  "THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR\n"
-	  "TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT\n"
-	  "OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY\n"
-	  "OF SUCH DAMAGE.\n"
-	  );
-  exit(0);
+    fprintf(stderr,
+            "   udpcast and its FEC code are free software\n"
+            "\n"
+            "   you can redistribute udpcast core functionality and/or\n"
+            "   it them under the terms of the GNU General Public License as\n"
+            "   published by the Free Software Foundation; either version 2 of\n"
+            "   the License, or (at your option) any later version.\n"
+            "\n"
+            "   This program is distributed in the hope that it will be useful,\n"
+            "   but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+            "   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+            "   GNU General Public License for more details.\n"
+            "\n"
+            "   You should have received a copy of the GNU General Public License\n"
+            "   along with this program; see the file COPYING.\n"
+            "   If not, write to the Free Software Foundation, Inc.,\n"
+            "   59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.\n"
+            "\n"
+            "   Alain Knaff\n"
+            "   <alain@knaff.lu>\n"
+            "   http://udpcast.linux.lu/\n"
+            "\n"
+            "the FEC code is covered by the following license:\n"
+            "fec.c -- forward error correction based on Vandermonde matrices\n"
+            "980624\n"
+            "(C) 1997-98 Luigi Rizzo (luigi@iet.unipi.it)\n"
+            "(C) 2001 Alain Knaff (alain@knaff.lu)\n"
+            "\n"
+            "Portions derived from code by Phil Karn (karn@ka9q.ampr.org),\n"
+            "Robert Morelos-Zaragoza (robert@spectra.eng.hawaii.edu) and Hari\n"
+            "Thirumoorthy (harit@spectra.eng.hawaii.edu), Aug 1995\n"
+            "\n"
+            "Redistribution and use in source and binary forms, with or without\n"
+            "modification, are permitted provided that the following conditions\n"
+            "are met:\n"
+            "\n"
+            "1. Redistributions of source code must retain the above copyright\n"
+            "   notice, this list of conditions and the following disclaimer.\n"
+            "2. Redistributions in binary form must reproduce the above\n"
+            "   copyright notice, this list of conditions and the following\n"
+            "   disclaimer in the documentation and/or other materials\n"
+            "   provided with the distribution.\n"
+            "\n"
+            "THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND\n"
+            "ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,\n"
+            "THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A\n"
+            "PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHORS\n"
+            "BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,\n"
+            "OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,\n"
+            "PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,\n"
+            "OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY\n"
+            "THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR\n"
+            "TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT\n"
+            "OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY\n"
+            "OF SUCH DAMAGE.\n"
+            );
+    exit(0);
 }
 
 #endif
