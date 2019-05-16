@@ -111,7 +111,7 @@ def wait_for_file(sender, params):
     if not os.path.exists(params['temp']):
         os.mkdir(params['temp'])
     manifest_filename = params['temp'] + '/manifest_' + process_name + '.cfg'
-    receive_file(manifest_filename, params['interface_out'], params['ip_in'], int(params['port']) + 1)
+    receive_file(manifest_filename, params['interface_out'], params['ip_in'], int(params['port']) + 2)
     log.debug(datetime.datetime.now())
     dirs, files = parse_manifest(manifest_filename)
     if len(files) == 0:
@@ -208,7 +208,7 @@ def file_copy(params):
     send_file(manifest_filename,
               params[1]['interface_in'],
               params[1]['ip_out'],
-              int(params[1]['port']) + 1,
+              int(params[1]['port']) + 2,
               params[1]['bitrate'])
     log.debug('Deleting manifest file')
     os.remove(manifest_filename)
