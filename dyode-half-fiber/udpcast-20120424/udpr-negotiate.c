@@ -25,9 +25,9 @@
 #define O_TRUNC 0
 #endif
 
-static int sendConnectReq(struct client_config *client_config,
-                          struct net_config *net_config,
-                          int haveServerAddress)
+static ssize_t sendConnectReq(struct client_config *client_config,
+                              struct net_config *net_config,
+                              int haveServerAddress)
 {
     struct connectReq connectReq;
 
@@ -44,7 +44,7 @@ static int sendConnectReq(struct client_config *client_config,
         return BCAST_CONTROL(client_config->S_UCAST, connectReq);
 }
 
-int sendGo(struct client_config *client_config)
+ssize_t sendGo(struct client_config *client_config)
 {
     struct go go;
     go.opCode = htons(CMD_GO);
@@ -52,7 +52,7 @@ int sendGo(struct client_config *client_config)
     return SSEND(go);
 }
 
-struct client_config *global_client_config = NULL;
+static struct client_config *global_client_config = NULL;
 
 static void fixConsole(void)
 {
@@ -186,7 +186,7 @@ int startReceiver(int doWarn,
     while (1)
     {
         // int len;
-        int msglen;
+        ssize_t msglen;
         int sock;
 
         if (!connectReqSent)

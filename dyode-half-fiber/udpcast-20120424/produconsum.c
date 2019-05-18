@@ -1,5 +1,4 @@
 #include <assert.h>
-#include "threads.h"
 #include <errno.h>
 #include "log.h"
 #include "produconsum.h"
@@ -7,22 +6,8 @@
 
 #define DEBUG 0
 
-/**
- * Simple implementation of producer-consumer pattern
- */
-struct produconsum {
-    unsigned int size;
-    volatile unsigned int produced;
-    unsigned int consumed;
-    volatile int atEnd;
-    pthread_mutex_t mutex;
-    volatile int consumerIsWaiting;
-    pthread_cond_t cond;
-    const char *name;
-};
 
-
-produconsum_t pc_makeProduconsum(unsigned int size, const char *name)
+produconsum_t pc_makeProduconsum(size_t size, const char *name)
 {
     produconsum_t pc = MALLOC(struct produconsum);
     pc->size = size;
@@ -50,17 +35,17 @@ static void wakeConsumer(produconsum_t pc)
  * the buffer. To ensure this, use a second buffer, oriented in the other
  * direction
  */
-void pc_produce(produconsum_t pc, unsigned int amount)
+void pc_produce(produconsum_t pc, size_t amount)
 {
-    unsigned int produced = pc->produced;
-    unsigned int consumed = pc->consumed;
+    size_t produced = pc->produced;
+    size_t consumed = pc->consumed;
 
     /* sanity checks:
      * 1. should not produce more than size
      * 2. do not pass consumed+size
      */
     if(amount > pc->size) {
-        udpc_fatal(1, "Buffer overflow in produce %s: %d > %d \n",
+        udpc_fatal(1, "Buffer overflow in produce %s: %zu > %zu \n",
                    pc->name, amount, pc->size);
     }
 
@@ -70,7 +55,7 @@ void pc_produce(produconsum_t pc, unsigned int amount)
 
     if(produced > consumed + pc->size ||
             (produced < consumed && produced > consumed - pc->size)) {
-        udpc_fatal(1, "Buffer overflow in produce %s: %d > %d [%d] \n",
+        udpc_fatal(1, "Buffer overflow in produce %s: %zu > %zu [%zu] \n",
                    pc->name, produced, consumed, pc->size);
     }
 
@@ -85,9 +70,9 @@ void pc_produceEnd(produconsum_t pc)
 }
 
 
-static int getProducedAmount(produconsum_t pc) {
-    unsigned int produced = pc->produced;
-    unsigned int consumed = pc->consumed;
+static size_t getProducedAmount(produconsum_t pc) {
+    size_t produced = pc->produced;
+    size_t consumed = pc->consumed;
     if(produced < consumed)
         return produced + 2 * pc->size - consumed;
     else
@@ -95,15 +80,15 @@ static int getProducedAmount(produconsum_t pc) {
 }
 
 
-unsigned int pc_getWaiting(produconsum_t pc)
+size_t pc_getWaiting(produconsum_t pc)
 {
     return getProducedAmount(pc);
 }
 
 
-static int _consumeAny(produconsum_t pc, unsigned int minAmount,
+static size_t _consumeAny(produconsum_t pc, size_t minAmount,
                        struct timespec *ts) {
-    unsigned int amount;
+    size_t amount;
 #if DEBUG
     flprintf("%s: Waiting for %d bytes (%d:%d)\n",
              pc->name, minAmount, pc->consumed, pc->produced);
@@ -123,7 +108,7 @@ static int _consumeAny(produconsum_t pc, unsigned int minAmount,
         flprintf("%s: ..Waiting for %d bytes (%d:%d)\n",
                  pc->name, minAmount, pc->consumed, pc->produced);
 #endif
-        if(ts == 0)
+        if(ts == NULL)
             pthread_cond_wait(&pc->cond, &pc->mutex);
         else {
             int r;
@@ -150,9 +135,9 @@ static int _consumeAny(produconsum_t pc, unsigned int minAmount,
 }
 
 
-int pc_consumed(produconsum_t pc, int amount)
+size_t pc_consumed(produconsum_t pc, size_t amount)
 {
-    unsigned int consumed = pc->consumed;
+    size_t consumed = pc->consumed;
     if(consumed >= 2*pc->size - amount) {
         consumed += amount - 2 *pc->size;
     } else {
@@ -162,48 +147,48 @@ int pc_consumed(produconsum_t pc, int amount)
     return amount;
 }
 
-int pc_consumeAny(produconsum_t pc)
+size_t pc_consumeAny(produconsum_t pc)
 {
     return _consumeAny(pc, 1, 0);
 }
 
-int pc_consumeAnyWithTimeout(produconsum_t pc, struct timespec *ts)
+size_t pc_consumeAnyWithTimeout(produconsum_t pc, struct timespec *ts)
 {
     return _consumeAny(pc, 1, ts);
 }
 
 
 
-int pc_consumeAnyContiguous(produconsum_t pc)
+size_t pc_consumeAnyContiguous(produconsum_t pc)
 {
     return pc_consumeContiguousMinAmount(pc, 1);
 }
 
-int pc_consumeContiguousMinAmount(produconsum_t pc, int amount)
+size_t pc_consumeContiguousMinAmount(produconsum_t pc, size_t amount)
 {
-    int n = _consumeAny(pc, amount, 0);
-    int l = pc->size - (pc->consumed % pc->size);
+    size_t n = _consumeAny(pc, amount, 0);
+    size_t l = pc->size - (pc->consumed % pc->size);
     if(n > l)
         n = l;
     return n;
     
 }
 
-int pc_consume(produconsum_t pc, int amount)
+size_t pc_consume(produconsum_t pc, size_t amount)
 {
     return _consumeAny(pc, amount, 0);
 }
 
-unsigned int pc_getConsumerPosition(produconsum_t pc)
+size_t pc_getConsumerPosition(produconsum_t pc)
 {
     return pc->consumed % pc->size;
 }
 
-unsigned int pc_getProducerPosition(produconsum_t pc)
+size_t pc_getProducerPosition(produconsum_t pc)
 {
     return pc->produced % pc->size;
 }
 
-unsigned int pc_getSize(produconsum_t pc) {
+size_t pc_getSize(produconsum_t pc) {
     return pc->size;
 }

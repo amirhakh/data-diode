@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <byteswap.h>
 
 #include "log.h"
 #include "fifo.h"
@@ -493,6 +494,7 @@ static int doTransfer(int sock,
 
     net_config->rcvbuf = 0;
 
+    // TODO: change for to list with size
     for (i = 0; i < MAX_CLIENTS; i++)
         if (udpc_isParticipantValid(db, i))
         {

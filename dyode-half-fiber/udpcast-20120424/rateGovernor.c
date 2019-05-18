@@ -45,7 +45,7 @@ void rgParseRateGovernor(struct net_config *net_config, char *rg)
     void *data;
 
     if(pos) {
-        dlname = strndup(rg, pos-rg);
+        dlname = strndup(rg, (size_t)(pos-rg));
         params = pos+1;
     } else {
         dlname = rg;
@@ -70,7 +70,7 @@ void rgParseRateGovernor(struct net_config *net_config, char *rg)
 
     data = rgInitGovernor(net_config, gov);
 
-    if(net_config->rateGovernorData == NULL) {
+    if(data == NULL) {
         fprintf(stderr, "Rate governor initialization error\n");
         exit(1);
     }
@@ -85,11 +85,11 @@ void rgParseRateGovernor(struct net_config *net_config, char *rg)
                 pos = params + strlen(params);
             eqPos = strchr(params, '=');
             if(eqPos == NULL || eqPos >= pos) {
-                key = strndup(params, pos-params);
+                key = strndup(params, (size_t)(pos-params));
                 value = NULL;
             } else {
-                key = strndup(params, eqPos-params);
-                value = strndup(eqPos+1, pos-(eqPos+1));
+                key = strndup(params, (size_t)(eqPos-params));
+                value = strndup(eqPos+1, (size_t)(pos-(eqPos+1)));
             }
             gov->rgSetProp(data, key, value);
             if(*pos)
@@ -103,7 +103,7 @@ void rgParseRateGovernor(struct net_config *net_config, char *rg)
 }
 #endif
 
-void rgWaitAll(struct net_config *cfg, int sock, in_addr_t ip, int size)
+void rgWaitAll(struct net_config *cfg, int sock, in_addr_t ip, size_t size)
 {
     int i=0;
     for(i=0; i<cfg->nrGovernors; i++) {

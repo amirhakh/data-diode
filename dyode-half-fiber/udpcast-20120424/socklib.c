@@ -186,7 +186,7 @@ void srandomTime(int printSeed)
 #endif
 
 /* makes a socket address */
-int makeSockAddr(char *hostname, short port, struct sockaddr_in *addr)
+int makeSockAddr(char *hostname, unsigned short port, struct sockaddr_in *addr)
 {
     struct hostent *host;
 
@@ -267,7 +267,7 @@ int getMyAddress(net_if_t *net_if, struct sockaddr_in *addr)
 }
 
 int getBroadCastAddress(net_if_t *net_if, struct sockaddr_in *addr,
-                        short port)
+                        unsigned short port)
 {
     int r = initSockAddress(ADDR_TYPE_BCAST, net_if, INADDR_ANY, port, addr);
     if (addr->sin_addr.s_addr == 0)
@@ -292,7 +292,7 @@ static int safe_inet_aton(const char *address, struct in_addr *ip)
 }
 
 int getMcastAllAddress(struct sockaddr_in *addr, const char *address,
-                       short port)
+                       unsigned short port)
 {
     struct in_addr ip;
     int ret;
@@ -307,7 +307,7 @@ int getMcastAllAddress(struct sockaddr_in *addr, const char *address,
     return initSockAddress(ADDR_TYPE_MCAST, NULL, ip.s_addr, port, addr);
 }
 
-int doSend(int s, void *message, size_t len, struct sockaddr_in *to)
+ssize_t doSend(int s, void *message, size_t len, struct sockaddr_in *to)
 {
     /*    flprintf("sent: %08x %d\n", *(int*) message, len);*/
 #ifdef LOSSTEST
@@ -316,11 +316,11 @@ int doSend(int s, void *message, size_t len, struct sockaddr_in *to)
     return sendto(s, message, len, 0, (struct sockaddr *)to, sizeof(*to));
 }
 
-int doReceive(int s, void *message, size_t len,
-              struct sockaddr_in *from, int portBase)
+ssize_t doReceive(int s, void *message, size_t len,
+                  struct sockaddr_in *from, int portBase)
 {
     socklen_t slen;
-    int r;
+    ssize_t r;
     unsigned short port;
     char ipBuffer[16];
 
@@ -343,12 +343,12 @@ int doReceive(int s, void *message, size_t len,
     return r;
 }
 
-int getSendBuf(int sock)
+unsigned int getSendBuf(int sock)
 {
-    int bufsize;
+    unsigned int bufsize;
     socklen_t len = sizeof(int);
     if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, &len) < 0)
-        return -1;
+        return 0;
     return bufsize;
 }
 
@@ -363,7 +363,7 @@ unsigned int getRcvBuf(int sock)
     unsigned int bufsize;
     socklen_t len = sizeof(int);
     if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&bufsize, &len) < 0)
-        return -1;
+        return 0;
     return bufsize;
 }
 
@@ -528,7 +528,7 @@ static char *fmtName(MIB_IFROW *ifrow)
  * 1 yes
  * -1 unknown
  */
-static int hasLink(int s, const char *ifname)
+static unsigned int hasLink(int s, const char *ifname)
 {
 
 #ifdef ETHTOOL_GLINK
@@ -543,14 +543,14 @@ static int hasLink(int s, const char *ifname)
     if (ioctl(s, SIOCETHTOOL, &ifr) == -1)
     {
         /* Operation not supported */
-        return -1;
+        return 0;
     }
     else
     {
         return edata.data;
     }
 #else
-    return -1;
+    return 0;
 #endif
 }
 #endif
@@ -691,7 +691,7 @@ net_if_t *getNetIf(const char *wanted)
      #endif
          )
     {
-        unsigned long iaddr = getSinAddr(&ifrp->ifr_addr).s_addr;
+        in_addr_t iaddr = getSinAddr(&ifrp->ifr_addr).s_addr;
         int goodness;
 
         if (ifrp->ifr_addr.sa_family != PF_INET)
@@ -1006,7 +1006,7 @@ net_if_t *getNetIf(const char *wanted)
 int makeSocket(addr_type_t addr_type,
                net_if_t *net_if,
                struct sockaddr_in *tmpl,
-               int port)
+               unsigned short port)
 {
     int ret, s;
     struct sockaddr_in myaddr;
@@ -1187,7 +1187,7 @@ int selectSock(int *socks, int nr, int startTimeout)
     struct timeval tv, *tvp;
     if (startTimeout)
     {
-        « tv.tv_sec = startTimeout;
+        tv.tv_sec = startTimeout;
         tv.tv_usec = 0;
         tvp = &tv;
     }

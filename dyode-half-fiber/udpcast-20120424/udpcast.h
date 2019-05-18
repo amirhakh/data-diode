@@ -44,9 +44,9 @@ struct disk_config {
 struct net_config {
     net_if_t *net_if; /* Network interface (eth0, isdn0, etc.) on which to
                * multicast */
-    int portBase; /* Port base */
-    int blockSize;
-    int sliceSize;
+    uint16_t portBase; /* Port base */
+    uint32_t blockSize;
+    uint32_t sliceSize;
     struct sockaddr_in controlMcastAddr;
     struct sockaddr_in dataMcastAddr;
     const char *mcastRdv;
@@ -68,24 +68,24 @@ struct net_config {
     int flags; /* non-capability command line flags */
     int capabilities;
 
-    int min_slice_size;
-    int default_slice_size;
-    int max_slice_size;
-    unsigned int rcvbuf;
+    uint32_t min_slice_size;
+    uint32_t default_slice_size;
+    uint32_t max_slice_size;
+    uint32_t rcvbuf;
 
     int rexmit_hello_interval; /* retransmission interval between hello's.
                 * If 0, hello message won't be retransmitted
                 */
     int autostart; /* autostart after that many retransmits */
 
-    int requestedBufSize; /* requested receiver buffer */
+    uint32_t requestedBufSize; /* requested receiver buffer */
 
     /* sender-specific parameters */
-    int min_receivers;
-    int max_receivers_wait;
-    int min_receivers_wait;
+    uint32_t min_receivers;
+    uint32_t max_receivers_wait;
+    uint32_t min_receivers_wait;
 
-    int retriesUntilDrop;
+    uint32_t retriesUntilDrop;
 
     /* receiver-specif parameters */
     int exitWait; /* How many milliseconds to wait on program exit */
@@ -95,12 +95,12 @@ struct net_config {
 
     /* FEC config */
 #ifdef BB_FEATURE_UDPCAST_FEC
-    int fec_redundancy; /* how much fec blocks are added per group */
-    int fec_stripesize; /* size of FEC group */
-    int fec_stripes; /* number of FEC stripes per slice */
+    uint32_t fec_redundancy; /* how much fec blocks are added per group */
+    uint32_t fec_stripesize; /* size of FEC group */
+    uint16_t fec_stripes; /* number of FEC stripes per slice */
 #endif
 
-    int rehelloOffset; /* how far before end will rehello packet will
+    uint32_t rehelloOffset; /* how far before end will rehello packet will
               be retransmitted */
 };
 
@@ -116,7 +116,7 @@ struct stat_config {
 
 void *rgInitGovernor(struct net_config *cfg, struct rateGovernor_t *gov);
 void rgParseRateGovernor(struct net_config *net_config, char *rg);
-void rgWaitAll(struct net_config *cfg, int sock, in_addr_t ip, int size);
+void rgWaitAll(struct net_config *cfg, int sock, in_addr_t ip, size_t size);
 void rgShutdownAll(struct net_config *cfg);
 
 /**

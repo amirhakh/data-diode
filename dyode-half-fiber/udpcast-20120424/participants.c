@@ -1,4 +1,3 @@
-#include "socklib.h"
 #include "log.h"
 #include "util.h"
 #include "participants.h"
@@ -7,28 +6,17 @@
 #include <syslog.h>
 #endif
 
-struct  participantsDb {
-    int nrParticipants;
-    
-    struct clientDesc {
-        struct sockaddr_in addr;
-        int used;
-        int capabilities;
-        unsigned int rcvbuf;
-    } clientTable[MAX_CLIENTS];
-};
+int32_t addParticipant(participantsDb_t,
+                       struct sockaddr_in *addr,
+                       int capabilities,
+                       unsigned int rcvbuf,
+                       int pointopoint);
 
-int addParticipant(participantsDb_t,
-                   struct sockaddr_in *addr,
-                   int capabilities,
-                   unsigned int rcvbuf,
-                   int pointopoint);
-
-int isParticipantValid(struct participantsDb *db, int i) {
+int isParticipantValid(struct participantsDb *db, int32_t i) {
     return db->clientTable[i].used;
 }
 
-int removeParticipant(struct participantsDb *db, int i) {
+int removeParticipant(struct participantsDb *db, int32_t i) {
     if(db->clientTable[i].used) {
         char ipBuffer[16];
         flprintf("Disconnecting #%d (%s)\n", i,
@@ -43,8 +31,8 @@ int removeParticipant(struct participantsDb *db, int i) {
     return 0;
 }
 
-int lookupParticipant(struct participantsDb *db, struct sockaddr_in *addr) {
-    int i;
+int32_t lookupParticipant(struct participantsDb *db, struct sockaddr_in *addr) {
+    int32_t i;
     for (i=0; i < MAX_CLIENTS; i++) {
         if (db->clientTable[i].used &&
                 ipIsEqual(&db->clientTable[i].addr, addr)) {
@@ -54,16 +42,16 @@ int lookupParticipant(struct participantsDb *db, struct sockaddr_in *addr) {
     return -1;
 }
 
-int nrParticipants(participantsDb_t db) {
+int32_t nrParticipants(participantsDb_t db) {
     return db->nrParticipants;
 }
 
-int addParticipant(participantsDb_t db,
-                   struct sockaddr_in *addr,
-                   int capabilities,
-                   unsigned int rcvbuf,
-                   int pointopoint) {
-    int i;
+int32_t addParticipant(participantsDb_t db,
+                        struct sockaddr_in *addr,
+                        int capabilities,
+                        unsigned int rcvbuf,
+                        int pointopoint) {
+    int32_t i;
 
     if((i = lookupParticipant(db, addr)) >= 0)
         return i;
@@ -96,17 +84,17 @@ participantsDb_t makeParticipantsDb(void)
     return MALLOC(struct participantsDb);
 }
 
-int getParticipantCapabilities(participantsDb_t db, int i)
+int getParticipantCapabilities(participantsDb_t db, int32_t i)
 {
     return db->clientTable[i].capabilities;
 }
 
-unsigned int getParticipantRcvBuf(participantsDb_t db, int i)
+unsigned int getParticipantRcvBuf(participantsDb_t db, int32_t i)
 {
     return db->clientTable[i].rcvbuf;
 }
 
-struct sockaddr_in *getParticipantIp(participantsDb_t db, int i)
+struct sockaddr_in *getParticipantIp(participantsDb_t db, int32_t i)
 {
     return &db->clientTable[i].addr;
 }
@@ -114,7 +102,7 @@ struct sockaddr_in *getParticipantIp(participantsDb_t db, int i)
 void printNotSet(participantsDb_t db, char *d)
 {
     int first=1;
-    int i;
+    int32_t i;
     flprintf("[");
     for (i=0; i < MAX_CLIENTS; i++) {
         if (db->clientTable[i].used) {
@@ -133,7 +121,7 @@ void printNotSet(participantsDb_t db, char *d)
 void printSet(participantsDb_t db, char *d)
 {
     int first=1;
-    int i;
+    int32_t i;
     flprintf("[");
     for (i=0; i < MAX_CLIENTS; i++) {
         if (db->clientTable[i].used) {

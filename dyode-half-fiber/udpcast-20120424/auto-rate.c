@@ -15,21 +15,15 @@
 
 #ifdef FLAG_AUTORATE
 
-struct auto_rate_t {
-    int isInitialized; /* has this already been initialized? */
-    int dir; /* 1 if TIOCOUTQ is remaining space,
-        * 0 if TIOCOUTQ is consumed space */
-    int sendbuf; /* sendbuf */
-};
 
-static int getCurrentQueueLength(int sock) {
+static unsigned int getCurrentQueueLength(int sock) {
 #ifdef TIOCOUTQ
-    int length;
+    unsigned int length;
     if(ioctl(sock, TIOCOUTQ, &length) < 0)
-        return -1;
+        return 0;
     return length;
 #else
-    return -1;
+    return 0;
 #endif
 }
 
@@ -42,7 +36,7 @@ static void *allocAutoRate(void) {
 }
 
 static void initialize(struct auto_rate_t *autoRate_l, int sock) {
-    int q = getCurrentQueueLength(sock);
+    unsigned int q = getCurrentQueueLength(sock);
     if(q == 0) {
         autoRate_l->dir = 0;
         autoRate_l->sendbuf = getSendBuf(sock);
@@ -56,7 +50,7 @@ static void initialize(struct auto_rate_t *autoRate_l, int sock) {
 /**
  * If queue gets almost full, slow down things
  */
-static void doAutoRate(void *data, int sock, in_addr_t ip, long size)
+static void doAutoRate(void *data, int sock, in_addr_t ip, size_t size)
 {
     struct auto_rate_t *autoRate_l = (struct auto_rate_t*) data;
     (void) ip;
@@ -65,7 +59,7 @@ static void doAutoRate(void *data, int sock, in_addr_t ip, long size)
         initialize(autoRate_l, sock);
 
     while(1) {
-        int r = getCurrentQueueLength(sock);
+        size_t r = getCurrentQueueLength(sock);
         if(autoRate_l->dir)
             r = autoRate_l->sendbuf - r;
 

@@ -18,12 +18,12 @@
 #endif
 
 int writer(struct fifo *fifo, int outFile) {
-    int fifoSize = pc_getSize(fifo->data);
+    size_t fifoSize = pc_getSize(fifo->data);
     if(fifoSize % BLOCKSIZE)
         udpc_fatal(1, "Fifo size not a multiple of block size\n");
     while(1) {
-        int pos=pc_getConsumerPosition(fifo->data);
-        int bytes = pc_consumeContiguousMinAmount(fifo->data, BLOCKSIZE);
+        size_t pos=pc_getConsumerPosition(fifo->data);
+        size_t bytes = pc_consumeContiguousMinAmount(fifo->data, BLOCKSIZE);
         if (bytes == 0) {
             return 0;
         }
@@ -45,12 +45,12 @@ int writer(struct fifo *fifo, int outFile) {
      * long */
         if (bytes > 128 * 1024)
             bytes = 64 * 1024;
-
-        bytes = write(outFile, fifo->dataBuffer + pos, bytes);
-        if(bytes < 0) {
+        ssize_t ret = write(outFile, fifo->dataBuffer + pos, bytes);
+        if(ret < 0) {
             perror("write");
             exit(1);
         }
+        bytes = (size_t)(ret);
         pc_consumed(fifo->data, bytes);
         pc_produce(fifo->freeMemQueue, bytes);
     }

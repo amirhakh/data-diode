@@ -1,9 +1,11 @@
 #ifndef UDP_RECEIVER_H
 #define UDP_RECEIVER_H
 
+#include "socklib.h"
 #include "threads.h"
 #include "statistics.h"
 #include "console.h"
+#include "udpcast.h"
 
 #define S_UCAST socks[0]
 #define S_BCAST socks[1]
@@ -15,7 +17,7 @@
 struct client_config {
     int socks[NR_CLIENT_SOCKS];
     struct sockaddr_in serverAddr;
-    int clientNumber;
+    int32_t clientNumber;
     int isStarted;
     pthread_t thread;
     int sender_is_newgen;
@@ -39,7 +41,7 @@ int writer(struct fifo *fifo, int fd);
 int openPipe(int disk, 
              struct disk_config *disk_config,
              int *pipePid);
-int sendGo(struct client_config *);
+ssize_t sendGo(struct client_config *);
 void sendDisconnect(int, struct client_config *);
 int startReceiver(int doWarn,
                   struct disk_config *disk_config,

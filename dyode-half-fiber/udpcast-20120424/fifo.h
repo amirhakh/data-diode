@@ -17,6 +17,6 @@ typedef struct fifo {
 
 #define initFifo udpc_initFifo
 
-void initFifo(struct fifo *fifo, int blockSize);
+void initFifo(struct fifo *fifo, unsigned int blockSize);
 
 #endif

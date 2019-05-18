@@ -1,6 +1,38 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 
+#include "util.h"
+#include <sys/time.h>
+#include <stdio.h>
+/**
+ * Common part between receiver and sender stats
+ */
+struct stats {
+    int fd;
+    struct timeval lastPrinted;
+    long statPeriod;
+    int64_t printUncompressedPos;
+    int noProgress;
+};
+
+struct receiver_stats {
+    struct timeval tv_start;
+    int bytesOrig;
+    int64_t totalBytes;
+    int timerStarted;
+    struct stats s;
+};
+
+struct sender_stats {
+    FILE *log;
+    uint64_t totalBytes;
+    uint64_t retransmissions;
+    int32_t clNo;
+    unsigned long periodBytes;
+    struct timeval periodStart;
+    long bwPeriod;
+    struct stats s;
+};
 
 typedef struct receiver_stats *receiver_stats_t;
 typedef struct sender_stats *sender_stats_t;
@@ -14,7 +46,7 @@ receiver_stats_t udpc_allocReadStats(int fd, long statPeriod,
                                      int printUncompressedPos,
                                      int noProgress);
 void udpc_receiverStatsStartTimer(receiver_stats_t);
-void udpc_receiverStatsAddBytes(receiver_stats_t, long bytes);
+void udpc_receiverStatsAddBytes(receiver_stats_t, int64_t bytes);
 void udpc_displayReceiverStats(receiver_stats_t, int isFinal);
 
 #define allocSenderStats udpc_allocSenderStats
@@ -26,12 +58,12 @@ void udpc_displayReceiverStats(receiver_stats_t, int isFinal);
 sender_stats_t udpc_allocSenderStats(int fd, FILE *logfile, long bwPeriod,
                                      long statPeriod, int printUncompressedPos,
                                      int noProgress);
-void udpc_senderStatsAddBytes(sender_stats_t, long bytes);
+void udpc_senderStatsAddBytes(sender_stats_t, int64_t bytes);
 void udpc_senderStatsAddRetransmissions(sender_stats_t ss, 
-                                        int retransmissions);
-void udpc_displaySenderStats(sender_stats_t,int blockSize, int sliceSize,
+                                        uint64_t retransmissions);
+void udpc_displaySenderStats(sender_stats_t, uint32_t blockSize, uint32_t sliceSize,
                              int isFinal);
-void udpc_senderSetAnswered(sender_stats_t ss, int clNo);
+void udpc_senderSetAnswered(sender_stats_t ss, int32_t clNo);
 
 
 #endif

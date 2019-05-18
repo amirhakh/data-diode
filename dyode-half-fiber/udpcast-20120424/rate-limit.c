@@ -10,8 +10,8 @@
 struct rate_limit {
     long long date;
     long long realDate;
-    int bitrate;
-    int queueSize;
+    int64_t bitrate;
+    uint64_t queueSize;
 };
 
 #define MILLION 1000000
@@ -39,13 +39,13 @@ static unsigned long parseSpeed(const char *speedString) {
     return speed;
 }
 
-static long long getLongLongDate(void) {
-    long long date;
+static int64_t getLongLongDate(void) {
+    int64_t date;
     struct timeval tv;
     gettimeofday(&tv,0);
-    date = (long long) tv.tv_sec;
+    date =  tv.tv_sec;
     date *= LLMILLION;
-    date += (long long) tv.tv_usec;
+    date += tv.tv_usec;
     return date;
 }
 
@@ -67,7 +67,7 @@ static void setProp(void *data, const char *key, const char *bitrate) {
         rateLimit->bitrate = parseSpeed(bitrate);
 }
 
-static void doRateLimit(void *data, int fd, in_addr_t ip, long size) {
+static void doRateLimit(void *data, int fd, in_addr_t ip, uint64_t size) {
     struct rate_limit *rateLimit = (struct rate_limit *) data;
     (void) fd;
     (void) ip;
@@ -75,7 +75,7 @@ static void doRateLimit(void *data, int fd, in_addr_t ip, long size) {
         long long now = getLongLongDate();
         long long elapsed = now - rateLimit->date;
         long long bits = elapsed * ((long long)rateLimit->bitrate) / LLMILLION;
-        int sleepTime;
+        unsigned int sleepTime;
         size += 28; /* IP header size */
 
         if(bits >= rateLimit->queueSize * 8) {
@@ -88,7 +88,7 @@ static void doRateLimit(void *data, int fd, in_addr_t ip, long size) {
         rateLimit->date += bits * LLMILLION / rateLimit->bitrate;
         rateLimit->realDate = now;
         sleepTime = rateLimit->queueSize * 8 * LLMILLION / rateLimit->bitrate;
-        if(sleepTime > 40000 || rateLimit->queueSize >= 100000) {
+        if(sleepTime > 10000 && (sleepTime > 40000 || rateLimit->queueSize >= 100000)) {
             sleepTime -= 10000;
             sleepTime -= sleepTime % 10000;
             usleep(sleepTime);

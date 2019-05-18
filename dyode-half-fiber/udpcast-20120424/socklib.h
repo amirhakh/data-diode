@@ -8,6 +8,8 @@
 
 #include <sys/types.h>
 #include <string.h>
+#include <byteswap.h>
+#include <stdint.h>
 
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -125,22 +127,22 @@ typedef enum addr_type_t {
 
 void doAutoRateLimit(int sock, int dir, int qsize, int size);
 
-int makeSockAddr(char *hostname, short port, struct sockaddr_in *addr);
+int makeSockAddr(char *hostname, unsigned short port, struct sockaddr_in *addr);
 
 int getMyAddress(net_if_t *net_if, struct sockaddr_in *addr);
-int getBroadCastAddress(net_if_t *net_if, struct sockaddr_in *addr, short port);
-int getMcastAllAddress(struct sockaddr_in *addr, const char *address, short port);
+int getBroadCastAddress(net_if_t *net_if, struct sockaddr_in *addr, unsigned short port);
+int getMcastAllAddress(struct sockaddr_in *addr, const char *address, unsigned short port);
 
 
-int doSend(int s, void *message, size_t len, struct sockaddr_in *to);
-int doReceive(int s, void *message, size_t len,
-              struct sockaddr_in *from, int portBase);
+ssize_t doSend(int s, void *message, size_t len, struct sockaddr_in *to);
+ssize_t doReceive(int s, void *message, size_t len,
+                  struct sockaddr_in *from, int portBase);
 
 void printMyIp(net_if_t *net_if);
 
 
 int makeSocket(addr_type_t addr_type, net_if_t *net_if, 
-               struct sockaddr_in *tmpl, int port);
+               struct sockaddr_in *tmpl, unsigned short port);
 
 int setSocketToBroadcast(int sock);
 int setTtl(int sock, int ttl);
@@ -149,7 +151,7 @@ int setMcastDestination(int,net_if_t *,struct sockaddr_in *);
 int isFullDuplex(int sock, const char *ifName);
 net_if_t *getNetIf(const char *ifName);
 
-int getSendBuf(int sock);
+unsigned int getSendBuf(int sock);
 void setSendBuf(int sock, unsigned int bufsize);
 unsigned int getRcvBuf(int sock);
 void setRcvBuf(int sock, unsigned int bufsize);

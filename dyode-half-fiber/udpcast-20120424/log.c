@@ -95,8 +95,8 @@ int fatal(int code, const char *fmt, ...) {
 
 int printLongNum(unsigned long long x) {
     /*    fprintf(stderr, "%03d ", (int) ( x / 1000000000000LL   ));*/
-    long long divisor;
-    long long minDivisor;
+    unsigned long long divisor;
+    unsigned long long minDivisor;
     int nonzero;
     char suffix=' ';
 

@@ -1,6 +1,7 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
+#include <termios.h>
 #ifdef __MINGW32__
 #include <winsock2.h>
 #include <winbase.h>
@@ -11,6 +12,15 @@
 #define prepareConsole udpc_prepareConsole
 #define getConsoleFd udpc_getConsoleFd
 #define restoreConsole udpc_restoreConsole
+
+
+struct console_t {
+    int fd; /* Filedescriptor for console, or -1 if disabled */
+    struct termios oldtio; /* old settings, for restore */
+    int needClose; /* Does file descriptor need to be closed on reset? */
+    int needRestore; /* Is the file descriptor indeed a terminal, and needs
+              * to be restored? */
+};
 
 typedef struct console_t console_t;
 

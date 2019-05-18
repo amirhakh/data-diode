@@ -577,7 +577,7 @@ int main(int argc, char **argv)
 #endif
     if (net_config.flags & FLAG_ASYNC)
     {
-        if (net_config.rateGovernor == 0)
+        if (*net_config.rateGovernor == NULL)
         {
             fprintf(stderr,
                     "Async mode chosen but no rate governor ==> unsafe\n");

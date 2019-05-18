@@ -11,7 +11,6 @@
 typedef unsigned long long loff_t;
 #endif
 
-#include <sys/time.h>
 #include <unistd.h>
 #include "log.h"
 #include "statistics.h"
@@ -22,24 +21,6 @@ typedef unsigned long long loff_t;
 #include <fcntl.h>
 #include <errno.h>
 
-/**
- * Common part between receiver and sender stats
- */
-struct stats {
-    int fd;
-    struct timeval lastPrinted;
-    long statPeriod;
-    int printUncompressedPos;
-    int noProgress;
-};
-
-struct receiver_stats {
-    struct timeval tv_start;
-    int bytesOrig;
-    long long totalBytes;
-    int timerStarted;
-    struct stats s;
-};
 
 /**
  * Answers whether statistics should be printed now
@@ -79,7 +60,7 @@ receiver_stats_t allocReadStats(int fd,
     return rs;
 }
 
-void receiverStatsAddBytes(receiver_stats_t rs, long bytes) {
+void receiverStatsAddBytes(receiver_stats_t rs, int64_t bytes) {
     if(rs != NULL)
         rs->totalBytes += bytes;
 }
@@ -101,16 +82,15 @@ static void printFilePosition(int fd)
         pfd=open(fn, O_RDONLY);
         if(pfd != -1) {
             char buf[161];
-            int n;
+            ssize_t n;
             n=read(pfd, buf, 160);
             if(n >= 0) {
                 char *num;
-                long long offset;
+                uint64_t offset;
                 buf[n]='\0';
                 num = strpbrk(buf, "0123456789");
                 offset = strtoull(num, 0, 10);
-                if(offset >= 0)
-                    printLongNum(offset);
+                printLongNum(offset);
             }
             close(pfd);
         } else {
@@ -151,7 +131,7 @@ int udpc_shouldPrintUncompressedPos(int deflt, int fd, int ref)
 }
 
 void displayReceiverStats(receiver_stats_t rs, int isFinal) {
-    long long timePassed;
+    int64_t timePassed;
     struct timeval tv_now;
 
     if(rs == NULL || rs->s.noProgress)
@@ -182,17 +162,6 @@ void displayReceiverStats(receiver_stats_t rs, int isFinal) {
 }
 
 
-struct sender_stats {
-    FILE *log;
-    unsigned long long totalBytes;
-    unsigned long long retransmissions;
-    int clNo;
-    unsigned long periodBytes;
-    struct timeval periodStart;
-    long bwPeriod;
-    struct stats s;
-};
-
 sender_stats_t allocSenderStats(int fd, FILE *logfile, long bwPeriod,
                                 long statPeriod, int printUncompressedPos,
                                 int noProgress) {
@@ -204,7 +173,7 @@ sender_stats_t allocSenderStats(int fd, FILE *logfile, long bwPeriod,
     return ss;
 }
 
-void senderStatsAddBytes(sender_stats_t ss, long bytes) {
+void senderStatsAddBytes(sender_stats_t ss, int64_t bytes) {
     if(ss != NULL) {
         ss->totalBytes += bytes;
 
@@ -228,18 +197,19 @@ void senderStatsAddBytes(sender_stats_t ss, long bytes) {
     }
 }
 
-void senderStatsAddRetransmissions(sender_stats_t ss, int retransmissions) {
+void senderStatsAddRetransmissions(sender_stats_t ss, uint64_t retransmissions) {
     if(ss != NULL) {
         ss->retransmissions += retransmissions;
-        logprintf(ss->log, "RETX %9lld %4d\n", ss->retransmissions,
+        logprintf(ss->log, "RETX %9lu %4lu\n", ss->retransmissions,
                   retransmissions);
     }
 }
 
 
-void displaySenderStats(sender_stats_t ss, int blockSize, int sliceSize,
+void displaySenderStats(sender_stats_t ss, uint32_t blockSize, uint32_t sliceSize,
                         int isFinal) {
-    unsigned int blocks, percent;
+    uint64_t blocks;
+    uint32_t percent;
     struct timeval tv_now;
     
     if(ss == NULL || ss->s.noProgress)
@@ -253,11 +223,11 @@ void displaySenderStats(sender_stats_t ss, int blockSize, int sliceSize,
     if(blocks == 0)
         percent = 0;
     else
-        percent = (1000L * ss->retransmissions) / blocks;
+        percent = (uint32_t)(1000L * ss->retransmissions) / blocks;
     
     fprintf(stderr, "bytes=");
     printLongNum(ss->totalBytes);
-    fprintf(stderr, " re-xmits=%07llu (%3u.%01u%%) slice=%04d ",
+    fprintf(stderr, " re-xmits=%07lu (%3u.%01u%%) slice=%04d ",
             ss->retransmissions, percent / 10, percent % 10, sliceSize);
     if(ss->s.printUncompressedPos)
         printFilePosition(ss->s.fd);
@@ -265,7 +235,7 @@ void displaySenderStats(sender_stats_t ss, int blockSize, int sliceSize,
     fflush(stderr);
 }
 
-void senderSetAnswered(sender_stats_t ss, int clNo) {
+void senderSetAnswered(sender_stats_t ss, int32_t clNo) {
     if(ss != NULL)
         ss->clNo = clNo;
 }

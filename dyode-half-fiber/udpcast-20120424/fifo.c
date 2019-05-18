@@ -1,7 +1,7 @@
 #include "libbb_udpcast.h"
 #include "fifo.h"
 
-void udpc_initFifo(struct fifo *fifo, int blockSize)
+void udpc_initFifo(struct fifo *fifo, unsigned int blockSize)
 {
     fifo->dataBufSize = blockSize * 4096;
     fifo->dataBuffer = xmalloc(fifo->dataBufSize+4096);

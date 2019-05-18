@@ -10,16 +10,7 @@
 
 #ifndef __MINGW32__
 
-#include <termios.h>
 #include <sys/select.h>
-
-struct console_t {
-    int fd; /* Filedescriptor for console, or -1 if disabled */
-    struct termios oldtio; /* old settings, for restore */
-    int needClose; /* Does file descriptor need to be closed on reset? */
-    int needRestore; /* Is the file descriptor indeed a terminal, and needs
-              * to be restored? */
-};
 
 console_t *prepareConsole(int fd) {
     struct termios newtio;
@@ -81,7 +72,7 @@ int selectWithConsole(console_t *con, int maxFd,
 void restoreConsole(console_t **cp, int doConsume) {
     console_t *c=*cp;
     int ch='\0';
-    int r UNUSED;
+    ssize_t r UNUSED;
 
     if(c == NULL)
         return;

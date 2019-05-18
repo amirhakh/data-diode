@@ -1,6 +1,8 @@
 #ifndef RATE_GOVERNOR_H
 #define RATE_GOVERNOR_H
 
+#include "socklib.h"
+
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -48,7 +50,7 @@ typedef struct rateGovernor_t {
    *  ip    ip address to which data is going to be sent
    *  bytes bytes number of bytes which will be sent
    */
-    void (*rgWait)(void *, int fd, in_addr_t ip, long bytes);
+    void (*rgWait)(void *, int fd, in_addr_t ip, size_t bytes);
 
     /**
    * Shut down the rate governor

@@ -48,14 +48,14 @@ union message {
     struct ok {
         unsigned short opCode;
         short reserved;
-        int sliceNo;
+        int64_t sliceNo;
     } ok;
 
     struct retransmit {
         unsigned short opCode;
         short reserved;
-        int sliceNo;
-        int rxmit;
+        int64_t sliceNo;
+        int64_t rxmit;
         unsigned char map[MAX_SLICE_SIZE / BITS_PER_CHAR];
     } retransmit;
 
@@ -63,7 +63,7 @@ union message {
         unsigned short opCode;
         short reserved;
         int capabilities;
-        unsigned int rcvbuf;
+        uint32_t rcvbuf;
     } connectReq;
 
     struct go {
@@ -83,7 +83,7 @@ struct connectReply {
     unsigned short opCode;
     short reserved;
     int clNr;
-    int blockSize;
+    int64_t blockSize;
     int capabilities;
     unsigned char mcastAddr[16]; /* provide enough place for IPV6 */
 };
@@ -93,7 +93,7 @@ struct hello {
     short reserved;
     int capabilities;
     unsigned char mcastAddr[16]; /* provide enough place for IPV6 */
-    short blockSize;
+    uint16_t blockSize;
 };
 
 union serverControlMsg {
@@ -108,27 +108,27 @@ union serverControlMsg {
 struct dataBlock {
     unsigned short opCode;
     short reserved;
-    int sliceNo;
-    unsigned short blockNo;
-    unsigned short reserved2;
-    int bytes;
+    int64_t sliceNo;
+    uint16_t blockNo;
+    uint16_t reserved2;
+    uint32_t bytes;
 };
 
 struct fecBlock {
     unsigned short opCode;
-    short stripes;
-    int sliceNo;
-    unsigned short blockNo;
-    unsigned short reserved2;
-    int bytes;
+    uint16_t stripes;
+    int64_t sliceNo;
+    uint16_t blockNo;
+    uint16_t reserved2;
+    uint32_t bytes;
 };
 
 struct reqack {
     unsigned short opCode;
     short reserved;
-    int sliceNo;
-    int bytes;
-    int rxmit;
+    int64_t sliceNo;
+    uint32_t bytes;
+    int64_t rxmit;
 };
 
 union serverDataMsg {

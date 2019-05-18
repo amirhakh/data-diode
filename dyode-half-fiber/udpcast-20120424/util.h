@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 #define MALLOC(type) ((type*)calloc(1, sizeof(type)))
 
