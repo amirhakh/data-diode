@@ -1187,7 +1187,7 @@ int selectSock(int *socks, int nr, int startTimeout)
     struct timeval tv, *tvp;
     if (startTimeout)
     {
-        « tv.tv_sec = startTimeout;
+        tv.tv_sec = startTimeout;
         tv.tv_usec = 0;
         tvp = &tv;
     }
