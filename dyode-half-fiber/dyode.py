@@ -29,7 +29,6 @@ log.setLevel(logging.DEBUG)
 # TODO: repository (nexus, ubuntu, windows)
 # TODO: file access: FTP, SFTP, SMB, web, ...
 # TODO: domain access manager
-# TODO: get file name from hash
 # TODO: append new manifest to previous file list
 
 ######################## Reception specific functions ##########################
@@ -52,7 +51,7 @@ def parse_manifest(file_path):
     return dirs, files
 
 
-def hash_process(queue):
+def check_hash_process(queue):
     while True:
         temp_file, hash_list = queue.get()
         log.debug("check hash for :: %s at %s" % (temp_file, datetime.datetime.now()))
@@ -86,12 +85,13 @@ def hash_process(queue):
         log.debug(datetime.datetime.now())
     queue.put(None)
 
+
 # File reception forever loop
 def file_reception_loop(params):
     # background hash check
     queue = Queue()
 
-    hash_p = Process(target=hash_process, args=(queue,))
+    hash_p = Process(target=check_hash_process, args=(queue,))
     hash_p.daemon = True
     hash_p.start()
 
@@ -135,7 +135,7 @@ def wait_for_file(queue, params):
     log.debug(datetime.datetime.now())
     dirs, files = parse_manifest(manifest_filename)
     if len(files) == 0:
-        log.error('No file detected')
+        log.error('No file listed in manifest')
         return 0
     log.debug('Manifest content : %s' % files)
 
