@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+apt-get install inotify-tools python-pyinotify python-pymodbus python-async python-yaml
+# TODO: add udpcast install setup (package or source)
+
 mkdir /opt/dyode
 
 cd ../dyode-half-fiber/

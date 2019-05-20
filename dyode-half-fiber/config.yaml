@@ -16,7 +16,8 @@ modules:
   diode_1:
     type: folder
     port: 9700
-    bitrate: 900
+    bitrate: 500 # in Mb/s
+    timeout: 10  # in second
     in: /data/diode
     out: /data/diode
     temp: /data/temp

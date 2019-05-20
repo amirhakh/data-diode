@@ -5,7 +5,7 @@ import errno
 import hashlib
 import logging
 import multiprocessing
-from multiprocessing import Process, Pipe
+from multiprocessing import Process, Pipe, Queue
 import os
 import random
 import shlex
@@ -29,7 +29,6 @@ log.setLevel(logging.DEBUG)
 # TODO: repository (nexus, ubuntu, windows)
 # TODO: file access: FTP, SFTP, SMB, web, ...
 # TODO: domain access manager
-# TODO: get file name from hash
 # TODO: append new manifest to previous file list
 
 ######################## Reception specific functions ##########################
@@ -52,34 +51,55 @@ def parse_manifest(file_path):
     return dirs, files
 
 
+def check_hash_process(queue):
+    while True:
+        temp_file, hash_list = queue.get()
+        log.debug("check hash for :: %s at %s" % (temp_file, datetime.datetime.now()))
+        if hash_list is None:
+            if temp_file is None:
+                break
+            else:
+                for the_file in os.listdir(temp_file):
+                    file_path = os.path.join(temp_file, the_file)
+                    if os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                    else:
+                        os.remove(file_path)
+                continue
+        h = hash_file(temp_file)
+        log.debug("hash finished at %s " % datetime.datetime.now())
+        if h not in hash_list:
+            log.error('Invalid checksum for file ' + temp_file + " " + h)
+            os.remove(temp_file)
+        else:
+            f = hash_list[h]
+            file_path = os.path.dirname(f)
+            if not os.path.exists(file_path):
+                try:
+                    os.makedirs(file_path)
+                except OSError as exc:  # Guard against race condition
+                    if exc.errno != errno.EEXIST:
+                        raise
+            shutil.move(temp_file, f)
+            log.info('File Available: ' + f)
+        log.debug(datetime.datetime.now())
+    queue.put(None)
+
+
 # File reception forever loop
 def file_reception_loop(params):
     # background hash check
-    def hash_process(pipe):
-        receiver, sender = pipe
-        while True:
-            f, h = receiver.recv()
-            log.debug("check hash for :: %s %s" % (f, h))
-            if f is None or h is None:
-                break
-            elif hash_file(f) != h:
-                log.error('Invalid checksum for file ' + f)
-                os.remove(f)
-            else:
-                log.info('File Available: ' + f)
-        receiver.close()
+    queue = Queue()
 
-    receiver, sender = Pipe()
-
-    hash_p = Process(target=hash_process, args=((receiver, sender),))
+    hash_p = Process(target=check_hash_process, args=(queue,))
     hash_p.daemon = True
     hash_p.start()
 
     while True:
-        wait_for_file(sender, params)
-        time.sleep(0.1)
+        wait_for_file(queue, params)
+        # time.sleep(0.1)
 
-    sender.send((None, None,))
+    queue.put((None,))
     sender.close()
     hash_p.join()
     if hash_p.is_alive():
@@ -89,7 +109,7 @@ def file_reception_loop(params):
 
 # Launch UDPCast to receive a file
 def receive_file(file_path, interface, ip_in, port_base, timeout=0):
-    log.debug(port_base)
+    # log.debug(port_base)
     # 10.0.1.1
     command = "udp-receiver --nosync --mcast-rdv-addr {0} --interface {1} --portbase {2} -f '{3}'".format(
         ip_in, interface, port_base, file_path)
@@ -101,7 +121,7 @@ def receive_file(file_path, interface, ip_in, port_base, timeout=0):
 
 
 # File reception function
-def wait_for_file(sender, params):
+def wait_for_file(queue, params):
     log.debug('Waiting for file ...')
     log.debug(datetime.datetime.now())
     # YOLO
@@ -115,35 +135,29 @@ def wait_for_file(sender, params):
     log.debug(datetime.datetime.now())
     dirs, files = parse_manifest(manifest_filename)
     if len(files) == 0:
-        log.error('No file detected')
+        log.error('No file listed in manifest')
         return 0
     log.debug('Manifest content : %s' % files)
+
+    hash_list = dict()
+    for f, h in files:
+        hash_list[h] = f
 
     for f, h in files:
         # filename = os.path.basename(f)
         # mkdir on the fly
-        file_path = os.path.dirname(f)
-        if not os.path.exists(file_path):
-            try:
-                os.makedirs(file_path)
-            except OSError as exc:  # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
         temp_file = params['temp'] + '/' + ''.join(
             random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(12))
-        log.debug(datetime.datetime.now())
-        receive_file(temp_file, params['interface_out'], params['ip_in'], params['port'])
-        log.info('File ' + f + ' received')
-        log.debug(datetime.datetime.now())
-        shutil.move(temp_file, f)
-        sender.send((f, h,))
+        log.debug("start get file at " + str(datetime.datetime.now()))
+        receive_file(temp_file, params['interface_out'], params['ip_in'], params['port'], 10)
+        log.info('File ' + temp_file + ' received at ' + str(datetime.datetime.now()))
+        if os.path.exists(temp_file):
+            queue.put((temp_file, hash_list,))
 
     os.remove(manifest_filename)
     # todo: background
-    for the_file in os.listdir(params['temp']):
-        file_path = os.path.join(params['temp'], the_file)
-        file_path = os.path.join(params['temp'], the_file)
-        shutil.rmtree(file_path)
+    queue.put((params['temp'], None))
+
 
 
 ################### Send specific functions ####################################
@@ -151,7 +165,7 @@ def wait_for_file(sender, params):
 # Send a file using udpcast
 def send_file(file_path, interface, ip_out, port_base, max_bitrate):
     # 10.0.1.2
-    command = 'udp-sender --async --fec 8x8/256 --max-bitrate {:0.0f}m '.format(max_bitrate) \
+    command = 'udp-sender --async --fec 8x8/128 --max-bitrate {:0.0f}m '.format(max_bitrate) \
               + '--mcast-rdv-addr {0} --mcast-data-addr {0} '.format(ip_out) \
               + '--portbase {0} --autostart 1 '.format(port_base) \
               + "--interface {0} -f '{1}'".format(interface, file_path)
@@ -215,6 +229,7 @@ def file_copy(params):
     time.sleep(0.1)
     for f in files:
         log.info('Sending ' + f)
+        time.sleep(0.5)
         log.debug(datetime.datetime.now())
         send_file(f,
                   params[1]['interface_in'],
