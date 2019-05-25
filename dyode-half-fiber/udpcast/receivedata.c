@@ -185,25 +185,25 @@ static void printMissedBlockMap(struct clientState *clst, slice_t slice)
 #endif
 }
 
-static int sendOk(struct client_config *client_config, int64_t sliceNo)
+static ssize_t sendOk(struct client_config *client_config, int64_t sliceNo)
 {
     struct ok ok;
-    ok.opCode = htons(CMD_OK);
+    ok.opCode = htobe16(CMD_OK);
     ok.reserved = 0;
-    ok.sliceNo = bswap_64(sliceNo);
+    ok.sliceNo = htobe64(sliceNo);
     return SSEND(ok);
 }
 
-static int sendRetransmit(struct clientState *clst,
-                          struct slice *slice,
-                          int64_t rxmit) {
+static ssize_t sendRetransmit(struct clientState *clst,
+                              struct slice *slice,
+                              uint32_t rxmit) {
     struct client_config *client_config = clst->client_config;
 
     assert(slice->magic == SLICEMAGIC);
-    slice->retransmit.opCode = htons(CMD_RETRANSMIT);
+    slice->retransmit.opCode = htobe16(CMD_RETRANSMIT);
     slice->retransmit.reserved = 0;
-    slice->retransmit.sliceNo = bswap_64(slice->sliceNo);
-    slice->retransmit.rxmit = bswap_64(rxmit);
+    slice->retransmit.sliceNo = htobe64(slice->sliceNo);
+    slice->retransmit.rxmit = htobe32(rxmit);
     return SSEND(slice->retransmit);
 }
 
@@ -858,7 +858,7 @@ static int processDataBlock(struct clientState *clst,
 static int processReqAck(struct clientState *clst,
                          int64_t sliceNo,
                          uint32_t bytes,
-                         int64_t rxmit)
+                         uint32_t rxmit)
 {   
     struct slice *slice = findSlice(clst, sliceNo);
     uint32_t blocksInSlice;
@@ -1049,10 +1049,10 @@ static int dispatchMessage(struct clientState *clst)
     ret=RecvMsg(fd, &clst->data_hdr, 0);
 #else
     ret=recvmsg(fd, &clst->data_hdr,
-            #ifdef MSG_DONTWAIT
+#ifdef MSG_DONTWAIT
                 clst->net_config->receiveTimeout ? MSG_DONTWAIT :
-                                               #endif
-                                                   0);
+#endif
+                0);
 #ifdef MSG_DONTWAIT
     if(ret < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         struct timeval tv;
@@ -1083,7 +1083,7 @@ static int dispatchMessage(struct clientState *clst)
 
 #if 0
     flprintf("received packet for slice %d, block %d\n",
-             ntohl(Msg.sliceNo), ntohs(db.blockNo));
+             be32toh(Msg.sliceNo), be16toh(db.blockNo));
 #endif
 
     if(!udpc_isAddressEqual(&lserver,
@@ -1096,34 +1096,34 @@ static int dispatchMessage(struct clientState *clst)
         return -1;
     }
 
-    switch(ntohs(clst->Msg.opCode)) {
+    switch(be16toh(clst->Msg.opCode)) {
     case CMD_DATA:
         closeAllExcept(clst, fd);
         udpc_receiverStatsStartTimer(clst->stats);
         clst->client_config->isStarted = 1;
         return processDataBlock(clst,
-                                bswap_64(clst->Msg.dataBlock.sliceNo),
-                                bswap_16(clst->Msg.dataBlock.blockNo),
-                                bswap_32(clst->Msg.dataBlock.bytes));
+                                be64toh(clst->Msg.dataBlock.sliceNo),
+                                be16toh(clst->Msg.dataBlock.blockNo),
+                                be32toh(clst->Msg.dataBlock.bytes));
 #ifdef BB_FEATURE_UDPCAST_FEC
     case CMD_FEC:
         closeAllExcept(clst, fd);
         receiverStatsStartTimer(clst->stats);
         clst->client_config->isStarted = 1;
         return processFecBlock(clst,
-                               bswap_16(clst->Msg.fecBlock.stripes),
-                               bswap_64(clst->Msg.fecBlock.sliceNo),
-                               bswap_16(clst->Msg.fecBlock.blockNo),
-                               bswap_32(clst->Msg.fecBlock.bytes));
+                               be16toh(clst->Msg.fecBlock.stripes),
+                               be64toh(clst->Msg.fecBlock.sliceNo),
+                               be16toh(clst->Msg.fecBlock.blockNo),
+                               be32toh(clst->Msg.fecBlock.bytes));
 #endif
     case CMD_REQACK:
         closeAllExcept(clst, fd);
         receiverStatsStartTimer(clst->stats);
         clst->client_config->isStarted = 1;
         return processReqAck(clst,
-                             bswap_64(clst->Msg.reqack.sliceNo),
-                             bswap_32(clst->Msg.reqack.bytes),
-                             bswap_64(clst->Msg.reqack.rxmit));
+                             be64toh(clst->Msg.reqack.sliceNo),
+                             be32toh(clst->Msg.reqack.bytes),
+                             be32toh(clst->Msg.reqack.rxmit));
     case CMD_HELLO_STREAMING:
     case CMD_HELLO_NEW:
     case CMD_HELLO:

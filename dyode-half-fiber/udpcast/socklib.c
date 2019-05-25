@@ -208,7 +208,7 @@ int makeSockAddr(char *hostname, unsigned short port, struct sockaddr_in *addr)
     }
 
     ((struct sockaddr_in *)addr)->sin_family = AF_INET;
-    ((struct sockaddr_in *)addr)->sin_port = htons(port);
+    ((struct sockaddr_in *)addr)->sin_port = htobe16(port);
     return 0;
 }
 
@@ -241,7 +241,7 @@ static int initSockAddress(addr_type_t addr_type,
 {
     memset((char *)addr, 0, sizeof(struct sockaddr_in));
     addr->sin_family = AF_INET;
-    addr->sin_port = htons(port);
+    addr->sin_port = htobe16(port);
 
     if (!net_if && addr_type != ADDR_TYPE_MCAST)
         udpc_fatal(1, "initSockAddr without ifname\n");
@@ -276,7 +276,7 @@ int getBroadCastAddress(net_if_t *net_if, struct sockaddr_in *addr,
         struct sockaddr_in ucast;
         initSockAddress(ADDR_TYPE_UCAST, net_if, INADDR_ANY, port, &ucast);
 
-        if ((ntohl(ucast.sin_addr.s_addr) & 0xff000000) == 0x7f000000)
+        if ((be32toh(ucast.sin_addr.s_addr) & 0xff000000) == 0x7f000000)
             addr->sin_addr.s_addr = ucast.sin_addr.s_addr;
     }
     return r;
@@ -331,12 +331,12 @@ ssize_t doReceive(int s, void *message, size_t len,
     r = recvfrom(s, message, len, 0, (struct sockaddr *)from, &slen);
     if (r < 0)
         return r;
-    port = ntohs(from->sin_port);
+    port = be16toh(from->sin_port);
     if (port != RECEIVER_PORT(portBase) && port != SENDER_PORT(portBase))
     {
         udpc_flprintf("Bad message from port %s.%d\n",
                       getIpString(from, ipBuffer),
-                      ntohs(((struct sockaddr_in *)from)->sin_port));
+                      be16toh(((struct sockaddr_in *)from)->sin_port));
         return -1;
     }
     /*    flprintf("recv: %08x %d\n", *(int*) message, r);*/
@@ -727,7 +727,7 @@ net_if_t *getNetIf(const char *wanted)
                 /* disregard interfaces whose address is zero */
                 goodness = 1;
             }
-            else if (iaddr == htonl(0x7f000001))
+            else if (iaddr == htobe32(0x7f000001))
             {
                 /* disregard localhost type devices */
                 goodness = 2;
@@ -909,7 +909,7 @@ net_if_t *getNetIf(const char *wanted)
                 /* disregard interfaces whose address is zero */
                 goodness = 1;
             }
-            else if (iaddr == htonl(0x7f000001))
+            else if (iaddr == htobe32(0x7f000001))
             {
                 /* disregard localhost type devices */
                 goodness = 2;
@@ -1076,7 +1076,7 @@ void printMyIp(net_if_t *net_if)
 
 char *udpc_getIpString(struct sockaddr_in *addr, char *buffer)
 {
-    long iaddr = htonl(getSinAddr(addr).s_addr);
+    long iaddr = htobe32(getSinAddr(addr).s_addr);
     sprintf(buffer, "%ld.%ld.%ld.%ld",
             (iaddr >> 24) & 0xff,
             (iaddr >> 16) & 0xff,
@@ -1097,12 +1097,12 @@ int ipIsZero(struct sockaddr_in *ip)
 
 unsigned short udpc_getPort(struct sockaddr_in *addr)
 {
-    return ntohs(((struct sockaddr_in *)addr)->sin_port);
+    return be16toh(((struct sockaddr_in *)addr)->sin_port);
 }
 
 void setPort(struct sockaddr_in *addr, unsigned short port)
 {
-    ((struct sockaddr_in *)addr)->sin_port = htons(port);
+    ((struct sockaddr_in *)addr)->sin_port = htobe16(port);
 }
 
 void clearIp(struct sockaddr_in *addr)
@@ -1126,8 +1126,8 @@ void copyIpFrom(struct sockaddr_in *dst, struct sockaddr_in *src)
 void getDefaultMcastAddress(net_if_t *net_if, struct sockaddr_in *mcast)
 {
     getMyAddress(net_if, mcast);
-    mcast->sin_addr.s_addr &= htonl(0x07ffffff);
-    mcast->sin_addr.s_addr |= htonl(0xe8000000);
+    mcast->sin_addr.s_addr &= htobe32(0x07ffffff);
+    mcast->sin_addr.s_addr |= htobe32(0xe8000000);
 }
 
 void copyToMessage(unsigned char *dst, struct sockaddr_in *src)
@@ -1246,7 +1246,7 @@ void closeSock(int *socks, int nr, int target)
 
 int isMcastAddress(struct sockaddr_in *addr)
 {
-    int ip = ntohl(addr->sin_addr.s_addr) >> 24;
+    int ip = be32toh(addr->sin_addr.s_addr) >> 24;
     return ip >= 0xe0 && ip < 0xf0;
 }
 

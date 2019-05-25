@@ -7,10 +7,10 @@
 #include "console.h"
 #include "udpcast.h"
 
-#define S_UCAST socks[0]
-#define S_BCAST socks[1]
-#define S_MCAST_CTRL socks[2]
-#define S_MCAST_DATA socks[3]
+#define S_UCAST 0
+#define S_BCAST 1
+#define S_MCAST_CTRL 2
+#define S_MCAST_DATA 3
 
 #define NR_CLIENT_SOCKS 4
 
@@ -49,7 +49,7 @@ int startReceiver(int doWarn,
                   struct stat_config *stat_config,
                   const char *ifName);
 
-#define SSEND(x) SEND(client_config->S_UCAST, x, client_config->serverAddr)
+#define SSEND(x) SEND(client_config->socks[S_UCAST], x, client_config->serverAddr)
 
 /**
  * Receiver will passively listen to sender. Works best if sender runs

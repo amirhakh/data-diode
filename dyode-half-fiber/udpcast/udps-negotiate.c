@@ -43,8 +43,8 @@ static int sendConnectionReply(participantsDb_t db,
                                int sock,
                                struct net_config *config,
                                struct sockaddr_in *client,
-                               int capabilities,
-                               unsigned int rcvbuf)
+                               uint32_t capabilities,
+                               uint32_t rcvbuf)
 {
     struct connectReply reply;
 
@@ -53,20 +53,20 @@ static int sendConnectionReply(participantsDb_t db,
 
     if (capabilities & CAP_BIG_ENDIAN)
     {
-        reply.opCode = htons(CMD_CONNECT_REPLY);
+        reply.opCode = htobe16(CMD_CONNECT_REPLY);
         reply.clNr =
-                htonl(udpc_addParticipant(db,
-                                          client,
-                                          capabilities,
-                                          rcvbuf,
-                                          config->flags & FLAG_POINTOPOINT));
-        reply.blockSize = htonl(config->blockSize);
+                htobe16(udpc_addParticipant(db,
+                                            client,
+                                            capabilities,
+                                            rcvbuf,
+                                            config->flags & FLAG_POINTOPOINT));
+        reply.blockSize = htobe32(config->blockSize);
     }
     else
     {
         udpc_fatal(1, "Little endian protocol no longer supported");
     }
-    reply.reserved = 0;
+//    reply.reserved = 0;
 
     if (config->flags & FLAG_POINTOPOINT)
     {
@@ -74,7 +74,7 @@ static int sendConnectionReply(participantsDb_t db,
     }
 
     /* new parameters: always big endian */
-    reply.capabilities = ntohl(config->capabilities);
+    reply.capabilities = be32toh(config->capabilities);
     copyToMessage(reply.mcastAddr, &config->dataMcastAddr);
     /*reply.mcastAddress = mcastAddress;*/
     rgWaitAll(config, sock, client->sin_addr.s_addr, sizeof(reply));
@@ -92,13 +92,13 @@ void sendHello(struct net_config *net_config, int sock,
     struct hello hello;
     /* send hello message */
     if (streaming)
-        hello.opCode = htons(CMD_HELLO_STREAMING);
+        hello.opCode = htobe16(CMD_HELLO_STREAMING);
     else
-        hello.opCode = htons(CMD_HELLO);
+        hello.opCode = htobe16(CMD_HELLO);
     hello.reserved = 0;
-    hello.capabilities = htonl(net_config->capabilities);
+    hello.capabilities = htobe32(net_config->capabilities);
     copyToMessage(hello.mcastAddr, &net_config->dataMcastAddr);
-    hello.blockSize = htons(net_config->blockSize);
+    hello.blockSize = htobe16(net_config->blockSize);
     rgWaitAll(net_config, sock, net_config->controlMcastAddr.sin_addr.s_addr,
               sizeof(hello));
     BCAST_CONTROL(sock, hello);
@@ -171,10 +171,10 @@ static int mainDispatcher(int *fd, int nr,
                           time_t *firstConnected)
 {
     struct sockaddr_in client;
-    union message fromClient;
+    union clientMsg fromClient;
     fd_set read_set;
     int ret;
-    int msgLength;
+    ssize_t msgLength;
     int startNow = 0;
     int selected;
     int keyPressed = 0;
@@ -278,15 +278,15 @@ static int mainDispatcher(int *fd, int nr,
     if (net_config->flags & FLAG_ASYNC)
         return 0;
 
-    switch (ntohs(fromClient.opCode))
+    switch (be16toh(fromClient.opCode))
     {
     case CMD_CONNECT_REQ:
         sendConnectionReply(db, fd[0],
                 net_config,
                 &client,
                 CAP_BIG_ENDIAN |
-                ntohl(fromClient.connectReq.capabilities),
-                ntohl(fromClient.connectReq.rcvbuf));
+                be32toh(fromClient.connectReq.capabilities),
+                be32toh(fromClient.connectReq.rcvbuf));
         return startNow;
     case CMD_GO:
         return 1;
@@ -338,7 +338,7 @@ int startSender(struct disk_config *disk_config,
 #ifdef SIG_BLOCK
     /* signal sets */
     sigset_t sig, oldsig;
-    int shouldRestoreSig;
+    int shouldRestoreSig = 0;
 #endif
 
     sock[nr++] = mainSock;
@@ -475,7 +475,7 @@ static int doTransfer(int sock,
                       struct net_config *net_config,
                       struct stat_config *stat_config)
 {
-    int i;
+    int16_t i;
     struct fifo fifo;
     sender_stats_t stats;
     int in;
@@ -498,7 +498,7 @@ static int doTransfer(int sock,
     for (i = 0; i < MAX_CLIENTS; i++)
         if (udpc_isParticipantValid(db, i))
         {
-            unsigned int pRcvBuf = udpc_getParticipantRcvBuf(db, i);
+            uint32_t pRcvBuf = udpc_getParticipantRcvBuf(db, i);
             if (isPtP)
                 copyIpFrom(&net_config->dataMcastAddr,
                            udpc_getParticipantIp(db, i));

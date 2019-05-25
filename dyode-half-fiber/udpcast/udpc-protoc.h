@@ -3,7 +3,8 @@
 
 #include "udpcast.h"
 
-#define MAX_BLOCK_SIZE 1456
+#define MAC_UDP_MSS 1472
+#define MAX_BLOCK_SIZE (MAC_UDP_MSS-sizeof(union serverDataMsg)) // 1472-16 (-24)
 #define MAX_FEC_INTERLEAVE 256
 
 /**
@@ -19,9 +20,9 @@ enum opCode {
     CMD_DISCONNECT,  /* receiver wants to disconnect itself */
 
     CMD_UNUSED,	     /* obsolete version of CMD_HELLO, dating back to the
-              * time when we had little endianness (PC). This
-              * opcode contained a long unnoticed bug with parsing of
-              * blocksize */
+                      * time when we had little endianness (PC). This
+                      * opcode contained a long unnoticed bug with parsing of
+                      * blocksize */
 
     /* Sender to receiver */
     CMD_REQACK,	     /* server request acknowledgments from receiver */
@@ -43,71 +44,75 @@ enum opCode {
  * "unexpected opcode" on retransmitted hello */
 #define CMD_HELLO 0x0500
 
-union message {
-    unsigned short opCode;
-    struct ok {
-        unsigned short opCode;
-        short reserved;
-        int64_t sliceNo;
-    } ok;
+struct ok {
+    uint16_t opCode;
+    int16_t reserved;
+    int64_t sliceNo;
+};
 
-    struct retransmit {
-        unsigned short opCode;
-        short reserved;
-        int64_t sliceNo;
-        int64_t rxmit;
-        unsigned char map[MAX_SLICE_SIZE / BITS_PER_CHAR];
-    } retransmit;
+struct retransmit {
+    uint16_t opCode;
+    int16_t reserved;
+    int64_t sliceNo;
+    uint32_t rxmit;
+    unsigned char map[MAX_SLICE_SIZE / BITS_PER_CHAR];
+};
 
-    struct connectReq {
-        unsigned short opCode;
-        short reserved;
-        int capabilities;
-        uint32_t rcvbuf;
-    } connectReq;
+struct go {
+    uint16_t opCode;
+    int16_t reserved;
+};
 
-    struct go {
-        unsigned short opCode;
-        short reserved;
-    } go;
+struct disconnect {
+    uint16_t opCode;
+    int16_t reserved;
+};
 
-    struct disconnect {
-        unsigned short opCode;
-        short reserved;
-    } disconnect;
+struct connectReq {
+    uint16_t opCode;
+    int16_t reserved;
+    uint32_t capabilities;
+    uint32_t rcvbuf;
+};
+
+union clientMsg {
+    uint16_t opCode;
+    struct ok ok;
+    struct retransmit retransmit;
+    struct connectReq connectReq;
+    struct go go;
+    struct disconnect disconnect;
 };
 
 
 
 struct connectReply {
-    unsigned short opCode;
-    short reserved;
-    int clNr;
-    int64_t blockSize;
-    int capabilities;
+    uint16_t opCode;
+    int16_t clNr;
+    int32_t blockSize;
+    uint32_t capabilities;
     unsigned char mcastAddr[16]; /* provide enough place for IPV6 */
 };
 
 struct hello {
-    unsigned short opCode;
-    short reserved;
-    int capabilities;
+    uint16_t opCode;
+    int16_t reserved;
+    uint32_t capabilities;
     unsigned char mcastAddr[16]; /* provide enough place for IPV6 */
     uint16_t blockSize;
 };
 
 union serverControlMsg {
-    unsigned short opCode;
-    short reserved;
+    uint16_t opCode;
     struct hello hello;
     struct connectReply connectReply;
-
 };
 
 
+
 struct dataBlock {
-    unsigned short opCode;
-    short reserved;
+    uint16_t opCode;
+    int16_t reserved;
     int64_t sliceNo;
     uint16_t blockNo;
     uint16_t reserved2;
@@ -115,7 +120,7 @@ struct dataBlock {
 };
 
 struct fecBlock {
-    unsigned short opCode;
+    uint16_t opCode;
     uint16_t stripes;
     int64_t sliceNo;
     uint16_t blockNo;
@@ -124,15 +129,15 @@ struct fecBlock {
 };
 
 struct reqack {
-    unsigned short opCode;
-    short reserved;
+    uint16_t opCode;
+    int16_t reserved;
     int64_t sliceNo;
     uint32_t bytes;
-    int64_t rxmit;
+    uint32_t rxmit;
 };
 
 union serverDataMsg {
-    unsigned short opCode;
+    uint16_t opCode;
     struct reqack reqack;
     struct dataBlock dataBlock;
     struct fecBlock fecBlock;

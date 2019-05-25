@@ -125,7 +125,7 @@ static void *run(void *p)
       fprintf(stderr, "Incomplete traffic control header\n");
       continue;
     }
-    if(n < ntohl(packet->total_routes) * 16) {
+    if(n < be32toh(packet->total_routes) * 16) {
       fprintf(stderr, "Incomplete traffic control data\n");
       continue;
     }
@@ -178,7 +178,7 @@ static void ipe_setProp(void *p, const char *key, const char *value)
     inet_aton(value, &me->recv.sin_addr);
   } else if(!strcmp("port", key)) {
     char *eptr;
-    me->recv.sin_port = htons(strtoul(value,&eptr, 0));
+    me->recv.sin_port = htobe16(strtoul(value,&eptr, 0));
     if(*eptr)
       fprintf(stderr, "Bad port %s\n", value);
   } else if(!strcmp("if", key)) {
@@ -266,8 +266,8 @@ static void ipe_wait(void *p, int fd, in_addr_t ip, long bytes)
 	/* no route found => no ratelimit... */
 	break;
 
-      level = ntohl(route->buffer_level);
-      length = ntohl(route->buffer_length);
+      level = be32toh(route->buffer_level);
+      length = be32toh(route->buffer_length);
       if(bytes < length * me->maxFillLevel / 100  - level)
 	/* enough space left for new packet */
 	break;
@@ -277,7 +277,7 @@ static void ipe_wait(void *p, int fd, in_addr_t ip, long bytes)
   if(route) {
     /* Account packet that will be sent */
     level += bytes;
-    route->buffer_level = htonl(level);
+    route->buffer_level = htobe32(level);
   }
   pthread_mutex_unlock(&me->mutex);
 }

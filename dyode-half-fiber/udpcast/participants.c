@@ -6,10 +6,10 @@
 #include <syslog.h>
 #endif
 
-int32_t addParticipant(participantsDb_t,
+int16_t addParticipant(participantsDb_t,
                        struct sockaddr_in *addr,
-                       int capabilities,
-                       unsigned int rcvbuf,
+                       uint32_t capabilities,
+                       uint32_t rcvbuf,
                        int pointopoint);
 
 int isParticipantValid(struct participantsDb *db, int32_t i) {
@@ -31,8 +31,8 @@ int removeParticipant(struct participantsDb *db, int32_t i) {
     return 0;
 }
 
-int32_t lookupParticipant(struct participantsDb *db, struct sockaddr_in *addr) {
-    int32_t i;
+int16_t lookupParticipant(struct participantsDb *db, struct sockaddr_in *addr) {
+    int16_t i;
     for (i=0; i < MAX_CLIENTS; i++) {
         if (db->clientTable[i].used &&
                 ipIsEqual(&db->clientTable[i].addr, addr)) {
@@ -42,16 +42,16 @@ int32_t lookupParticipant(struct participantsDb *db, struct sockaddr_in *addr) {
     return -1;
 }
 
-int32_t nrParticipants(participantsDb_t db) {
+int16_t nrParticipants(participantsDb_t db) {
     return db->nrParticipants;
 }
 
-int32_t addParticipant(participantsDb_t db,
+int16_t udpc_addParticipant(participantsDb_t db,
                         struct sockaddr_in *addr,
-                        int capabilities,
-                        unsigned int rcvbuf,
+                        uint32_t capabilities,
+                        uint32_t rcvbuf,
                         int pointopoint) {
-    int32_t i;
+    int16_t i;
 
     if((i = lookupParticipant(db, addr)) >= 0)
         return i;
@@ -84,17 +84,17 @@ participantsDb_t makeParticipantsDb(void)
     return MALLOC(struct participantsDb);
 }
 
-int getParticipantCapabilities(participantsDb_t db, int32_t i)
+uint32_t getParticipantCapabilities(participantsDb_t db, int16_t i)
 {
     return db->clientTable[i].capabilities;
 }
 
-unsigned int getParticipantRcvBuf(participantsDb_t db, int32_t i)
+uint32_t getParticipantRcvBuf(participantsDb_t db, int16_t i)
 {
     return db->clientTable[i].rcvbuf;
 }
 
-struct sockaddr_in *getParticipantIp(participantsDb_t db, int32_t i)
+struct sockaddr_in *getParticipantIp(participantsDb_t db, int16_t i)
 {
     return &db->clientTable[i].addr;
 }
@@ -121,7 +121,7 @@ void printNotSet(participantsDb_t db, char *d)
 void printSet(participantsDb_t db, char *d)
 {
     int first=1;
-    int32_t i;
+    int16_t i;
     flprintf("[");
     for (i=0; i < MAX_CLIENTS; i++) {
         if (db->clientTable[i].used) {

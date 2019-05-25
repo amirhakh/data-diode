@@ -17,6 +17,7 @@
 #include "rateGovernor.h"
 #include "rate-limit.h"
 #include "auto-rate.h"
+#include "udpc-protoc.h"
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
@@ -215,7 +216,7 @@ int main(int argc, char **argv)
 
     clearIp(&net_config.dataMcastAddr);
     net_config.mcastRdv = NULL;
-    net_config.blockSize = 1456;
+    net_config.blockSize = MAX_BLOCK_SIZE;
     net_config.sliceSize = 16;
     net_config.portBase = 9000;
     net_config.nrGovernors = 0;
@@ -313,7 +314,7 @@ int main(int argc, char **argv)
                     exit(1);
                 }
 #if 0
-                if (net_config.blockSize > 1456) {
+                if (net_config.blockSize > MAX_BLOCK_SIZE) {
                     perror("block size too large");
                     exit(1);
                 }

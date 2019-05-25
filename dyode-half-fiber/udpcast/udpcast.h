@@ -66,7 +66,7 @@ struct net_config {
     /* int autoRate; do queue watching using TIOCOUTQ, to avoid overruns */
 
     int flags; /* non-capability command line flags */
-    int capabilities;
+    uint32_t capabilities;
 
     uint32_t min_slice_size;
     uint32_t default_slice_size;
@@ -81,9 +81,9 @@ struct net_config {
     uint32_t requestedBufSize; /* requested receiver buffer */
 
     /* sender-specific parameters */
-    uint32_t min_receivers;
-    uint32_t max_receivers_wait;
-    uint32_t min_receivers_wait;
+    int16_t min_receivers;
+    int32_t max_receivers_wait;
+    int32_t min_receivers_wait;
 
     uint32_t retriesUntilDrop;
 

@@ -34,20 +34,20 @@ static ssize_t sendConnectReq(struct client_config *client_config,
     if (net_config->flags & FLAG_PASSIVE)
         return 0;
 
-    connectReq.opCode = htons(CMD_CONNECT_REQ);
+    connectReq.opCode = htobe16(CMD_CONNECT_REQ);
     connectReq.reserved = 0;
-    connectReq.capabilities = htonl(RECEIVER_CAPABILITIES);
-    connectReq.rcvbuf = htonl(getRcvBuf(client_config->S_UCAST));
+    connectReq.capabilities = htobe32(RECEIVER_CAPABILITIES);
+    connectReq.rcvbuf = htobe32(getRcvBuf(client_config->socks[S_UCAST]));
     if (haveServerAddress)
         return SSEND(connectReq);
     else
-        return BCAST_CONTROL(client_config->S_UCAST, connectReq);
+        return BCAST_CONTROL(client_config->socks[S_UCAST], connectReq);
 }
 
 ssize_t sendGo(struct client_config *client_config)
 {
     struct go go;
-    go.opCode = htons(CMD_GO);
+    go.opCode = htobe16(CMD_GO);
     go.reserved = 0;
     return SSEND(go);
 }
@@ -70,7 +70,7 @@ void sendDisconnect(int exitStatus,
                     struct client_config *client_config)
 {
     struct disconnect disconnect;
-    disconnect.opCode = htons(CMD_DISCONNECT);
+    disconnect.opCode = htobe16(CMD_DISCONNECT);
     disconnect.reserved = 0;
     SSEND(disconnect);
     if (exitStatus == 0)
@@ -139,19 +139,24 @@ int startReceiver(int doWarn,
     net_config->net_if = getNetIf(ifName);
     zeroSockArray(client_config.socks, NR_CLIENT_SOCKS);
 
-    client_config.S_UCAST = makeSocket(ADDR_TYPE_UCAST,
+    client_config.socks[S_UCAST] = makeSocket(ADDR_TYPE_UCAST,
                                        net_config->net_if,
                                        0, RECEIVER_PORT(net_config->portBase));
-    client_config.S_BCAST = makeSocket(ADDR_TYPE_BCAST,
+    client_config.socks[S_BCAST] = makeSocket(ADDR_TYPE_BCAST,
                                        net_config->net_if,
                                        0, RECEIVER_PORT(net_config->portBase));
+    if (net_config->requestedBufSize)
+    {
+        setRcvBuf(client_config.socks[S_UCAST], net_config->requestedBufSize);
+        setRcvBuf(client_config.socks[S_BCAST], net_config->requestedBufSize);
+    }
 
     if (net_config->ttl == 1 && net_config->mcastRdv == NULL)
     {
         getBroadCastAddress(net_config->net_if,
                             &net_config->controlMcastAddr,
                             SENDER_PORT(net_config->portBase));
-        setSocketToBroadcast(client_config.S_UCAST);
+        setSocketToBroadcast(client_config.socks[S_UCAST]);
     }
     else
     {
@@ -160,15 +165,17 @@ int startReceiver(int doWarn,
                            SENDER_PORT(net_config->portBase));
         if (isMcastAddress(&net_config->controlMcastAddr))
         {
-            setMcastDestination(client_config.S_UCAST, net_config->net_if,
+            setMcastDestination(client_config.socks[S_UCAST], net_config->net_if,
                                 &net_config->controlMcastAddr);
-            setTtl(client_config.S_UCAST, net_config->ttl);
+            setTtl(client_config.socks[S_UCAST], net_config->ttl);
 
-            client_config.S_MCAST_CTRL =
+            client_config.socks[S_MCAST_CTRL] =
                     makeSocket(ADDR_TYPE_MCAST,
                                net_config->net_if,
                                &net_config->controlMcastAddr,
                                RECEIVER_PORT(net_config->portBase));
+            if (net_config->requestedBufSize)
+                setRcvBuf(client_config.socks[S_MCAST_CTRL], net_config->requestedBufSize);
             // TODO: subscribe address as receiver to!
         }
     }
@@ -222,15 +229,15 @@ int startReceiver(int doWarn,
             /* not from the right port */
             continue;
 
-        switch (ntohs(Msg.opCode))
+        switch (be16toh(Msg.opCode))
         {
         case CMD_CONNECT_REPLY:
-            client_config.clientNumber = ntohl(Msg.connectReply.clNr);
-            net_config->blockSize = ntohl(Msg.connectReply.blockSize);
+            client_config.clientNumber = be16toh(Msg.connectReply.clNr);
+            net_config->blockSize = be32toh(Msg.connectReply.blockSize);
 
             udpc_flprintf("received message, cap=%08lx\n",
-                          (long)ntohl(Msg.connectReply.capabilities));
-            if (ntohl(Msg.connectReply.capabilities) & CAP_NEW_GEN)
+                          (long)be32toh(Msg.connectReply.capabilities));
+            if (be32toh(Msg.connectReply.capabilities) & CAP_NEW_GEN)
             {
                 client_config.sender_is_newgen = 1;
                 copyFromMessage(&net_config->dataMcastAddr,
@@ -246,15 +253,15 @@ int startReceiver(int doWarn,
         case CMD_HELLO_NEW:
         case CMD_HELLO:
             connectReqSent = 0;
-            if (ntohs(Msg.opCode) == CMD_HELLO_STREAMING)
+            if (be16toh(Msg.opCode) == CMD_HELLO_STREAMING)
                 net_config->flags |= FLAG_STREAMING;
-            if (ntohl(Msg.hello.capabilities) & CAP_NEW_GEN)
+            if (be32toh(Msg.hello.capabilities) & CAP_NEW_GEN)
             {
                 client_config.sender_is_newgen = 1;
                 copyFromMessage(&net_config->dataMcastAddr,
                                 Msg.hello.mcastAddr);
-                net_config->blockSize = ntohs(Msg.hello.blockSize);
-                if (ntohl(Msg.hello.capabilities) & CAP_ASYNC)
+                net_config->blockSize = be16toh(Msg.hello.blockSize);
+                if (be32toh(Msg.hello.capabilities) & CAP_ASYNC)
                     net_config->flags |= FLAG_PASSIVE;
                 if (net_config->flags & FLAG_PASSIVE)
                     goto break_loop;
@@ -271,7 +278,7 @@ int startReceiver(int doWarn,
 
         udpc_fatal(1,
                    "Bad server reply %04x. Other transfer in progress?\n",
-                   (unsigned short)ntohs(Msg.opCode));
+                   (unsigned short)be16toh(Msg.opCode));
     }
 
 break_loop:
@@ -288,18 +295,12 @@ break_loop:
     {
         udpc_flprintf("Listening to multicast on %s\n",
                       getIpString(&net_config->dataMcastAddr, ipBuffer));
-        client_config.S_MCAST_DATA =
+        client_config.socks[S_MCAST_DATA] =
                 makeSocket(ADDR_TYPE_MCAST, net_config->net_if,
                            &net_config->dataMcastAddr,
                            RECEIVER_PORT(net_config->portBase));
-    }
-
-    if (net_config->requestedBufSize)
-    {
-        int i;
-        for (i = 0; i < NR_CLIENT_SOCKS; i++)
-            if (client_config.socks[i] != -1)
-                setRcvBuf(client_config.socks[i], net_config->requestedBufSize);
+        if (net_config->requestedBufSize)
+            setRcvBuf(client_config.socks[S_MCAST_DATA], net_config->requestedBufSize);
     }
 
     outFile = openOutFile(disk_config);

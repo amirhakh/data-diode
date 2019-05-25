@@ -41,7 +41,7 @@ typedef struct slice {
     char isXmittedMap[MAX_SLICE_SIZE / BITS_PER_CHAR];
     /* blocks which have already been retransmitted during this round*/
 
-    int64_t rxmitId; /* used to distinguish among several retransmission
+    uint32_t rxmitId; /* used to distinguish among several retransmission
           * requests, so that we can easily discard answers to "old"
           * requests */
 
@@ -66,7 +66,7 @@ typedef struct slice {
 #endif
 } *slice_t;
 
-#define QUEUE_SIZE 256
+#define QUEUE_SIZE 1024
 
 struct returnChannel {
     pthread_t thread; /* message receiving thread */
@@ -74,8 +74,8 @@ struct returnChannel {
     produconsum_t incoming; /* where to enqueue incoming messages */
     produconsum_t freeSpace; /* free space */
     struct {
-        int32_t clNo; /* client number */
-        union message msg; /* its message */
+        int16_t clNo; /* client number */
+        union clientMsg msg; /* its message */
     } q[QUEUE_SIZE];
     struct net_config *config;
     participantsDb_t participantsDb;
@@ -236,13 +236,13 @@ static int transmitDataBlock(sender_state_t sendst, struct slice *slice, uint16_
 
     assert(i < MAX_SLICE_SIZE);
     
-    msg.opCode  = htons(CMD_DATA);
-    msg.sliceNo = bswap_64(slice->sliceNo);
-    msg.blockNo = bswap_16(i);
+    msg.opCode  = htobe16(CMD_DATA);
+    msg.sliceNo = htobe64(slice->sliceNo);
+    msg.blockNo = htobe16(i);
 
     msg.reserved = 0;
 //    msg.reserved2 = 0;
-    msg.bytes = bswap_32(slice->bytes);
+    msg.bytes = htobe32(slice->bytes);
 
     size = slice->bytes - i * config->blockSize;
     if(size < 0)
@@ -270,12 +270,12 @@ static int transmitFecBlock(sender_state_t sendst, struct slice *slice, uint16_t
 
     assert(i < config->fec_redundancy * config->fec_stripes);
     
-    msg.opCode  = htons(CMD_FEC);
-    msg.stripes = bswap_16(config->fec_stripes);
-    msg.sliceNo = bswap_64(slice->sliceNo);
-    msg.blockNo = bswap_16(i);
+    msg.opCode  = htobe16(CMD_FEC);
+    msg.stripes = htobe16(config->fec_stripes);
+    msg.sliceNo = htobe64(slice->sliceNo);
+    msg.blockNo = htobe16(i);
     msg.reserved2 = 0;
-    msg.bytes = bswap_32(slice->bytes);
+    msg.bytes = htobe32(slice->bytes);
     sendRawData(sendst->socket, sendst->config,
                 (char *) &msg, sizeof(msg),
                 (slice->fec_data + i * config->blockSize), config->blockSize);
@@ -471,9 +471,9 @@ static int sendReqack(struct slice *slice, struct net_config *net_config,
 #if DEBUG
     flprintf("Send reqack %d.%d\n", slice->sliceNo, slice->rxmitId);
 #endif
-    slice->sl_reqack.ra.opCode = htons(CMD_REQACK);
-    slice->sl_reqack.ra.sliceNo = bswap_64(slice->sliceNo);
-    slice->sl_reqack.ra.bytes = bswap_32(slice->bytes);
+    slice->sl_reqack.ra.opCode = htobe16(CMD_REQACK);
+    slice->sl_reqack.ra.sliceNo = htobe64(slice->sliceNo);
+    slice->sl_reqack.ra.bytes = htobe32(slice->bytes);
 
     slice->sl_reqack.ra.reserved = 0;
     memcpy((void*)&slice->answeredSet,(void*)&slice->sl_reqack.readySet,
@@ -484,7 +484,7 @@ static int sendReqack(struct slice *slice, struct net_config *net_config,
     slice->needRxmit = 0;
     memset(slice->rxmitMap, 0, sizeof(slice->rxmitMap));
     memset(slice->isXmittedMap, 0, sizeof(slice->isXmittedMap));
-    slice->sl_reqack.ra.rxmit = bswap_64(slice->rxmitId);
+    slice->sl_reqack.ra.rxmit = htobe32(slice->rxmitId);
     
     rgWaitAll(net_config, sock,
               net_config->dataMcastAddr.sin_addr.s_addr,
@@ -562,7 +562,7 @@ static int handleRetransmit(sender_state_t sendst,
                             struct slice *slice,
                             int32_t clNo,
                             unsigned char *map,
-                            int64_t rxmit)
+                            uint32_t rxmit)
 {
     unsigned int i;
 
@@ -639,18 +639,18 @@ static int handleNextMessage(sender_state_t sendst,
                              struct slice *rexmitSlice)
 {
     size_t pos = pc_getConsumerPosition(sendst->rc.incoming);
-    union message *msg = &sendst->rc.q[pos].msg;
-    int32_t clNo = sendst->rc.q[pos].clNo;
+    union clientMsg *msg = &sendst->rc.q[pos].msg;
+    int16_t clNo = sendst->rc.q[pos].clNo;
 
 #if DEBUG
     flprintf("handle next message\n");
 #endif
 
     pc_consumeAny(sendst->rc.incoming);
-    switch(ntohs(msg->opCode)) {
+    switch(be16toh(msg->opCode)) {
     case CMD_OK:
         handleOk(sendst,
-                 findSlice(xmitSlice, rexmitSlice, bswap_64(msg->ok.sliceNo)),
+                 findSlice(xmitSlice, rexmitSlice, be64toh(msg->ok.sliceNo)),
                  clNo);
         break;
     case CMD_DISCONNECT:
@@ -664,7 +664,7 @@ static int handleNextMessage(sender_state_t sendst,
 #endif
         handleRetransmit(sendst,
                          findSlice(xmitSlice, rexmitSlice,
-                                   bswap_64(msg->retransmit.sliceNo)),
+                                   be64toh(msg->retransmit.sliceNo)),
                          clNo,
                          msg->retransmit.map,
                          msg->retransmit.rxmit);
@@ -684,7 +684,7 @@ static THREAD_RETURN returnChannelMain(void *args) {
 
     while(1) {
         struct sockaddr_in from;
-        int32_t clNo;
+        int16_t clNo;
         size_t pos = pc_getConsumerPosition(returnChannel->freeSpace);
         pc_consumeAny(returnChannel->freeSpace);
 

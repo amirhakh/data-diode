@@ -6,7 +6,7 @@
 
 typedef struct fifo { 
     unsigned char *dataBuffer;
-    unsigned int dataBufSize;
+    size_t dataBufSize;
 
     produconsum_t freeMemQueue; /* queue for free memory */
     produconsum_t data; /* queue for received data or data received
@@ -17,6 +17,6 @@ typedef struct fifo {
 
 #define initFifo udpc_initFifo
 
-void initFifo(struct fifo *fifo, unsigned int blockSize);
+void initFifo(struct fifo *fifo, size_t blockSize);
 
 #endif
