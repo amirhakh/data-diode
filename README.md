@@ -21,3 +21,4 @@
 * file access: FTP, SFTP, web, ...
 * domain access manager for users
 * append new manifest to previous file list
+* add nexus repository (with update core image)

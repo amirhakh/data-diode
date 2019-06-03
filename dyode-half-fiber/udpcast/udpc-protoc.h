@@ -115,28 +115,28 @@ union serverControlMsg {
 struct dataBlock {
     uint16_t opCode;
     int16_t reserved;
-    int64_t sliceNo;
     uint16_t blockNo;
     uint16_t reserved2;
+    int64_t sliceNo;
     uint32_t bytes;
-};
+} __attribute__((packed));
 
 struct fecBlock {
     uint16_t opCode;
     uint16_t stripes;
-    int64_t sliceNo;
     uint16_t blockNo;
     uint16_t reserved2;
+    int64_t sliceNo;
     uint32_t bytes;
-};
+} __attribute__((packed));
 
 struct reqack {
     uint16_t opCode;
     int16_t reserved;
+    uint32_t rxmit;
     int64_t sliceNo;
     uint32_t bytes;
-    uint32_t rxmit;
-};
+} __attribute__((packed));
 
 union serverDataMsg {
     uint16_t opCode;
