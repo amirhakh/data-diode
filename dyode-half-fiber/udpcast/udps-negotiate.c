@@ -60,7 +60,7 @@ static int sendConnectionReply(participantsDb_t db,
                                             capabilities,
                                             rcvbuf,
                                             config->flags & FLAG_POINTOPOINT));
-        reply.blockSize = htobe32(config->blockSize);
+        reply.blockSize = htobe16(config->blockSize);
     }
     else
     {
@@ -482,7 +482,7 @@ static int doTransfer(int sock,
     int origIn;
     int pid;
     int isPtP = isPointToPoint(db, net_config->flags);
-    int printUncompressedPos;
+    char printUncompressedPos;
 
     if ((net_config->flags & FLAG_POINTOPOINT) &&
             udpc_nrParticipants(db) != 1)
@@ -539,13 +539,16 @@ static int doTransfer(int sock,
     in = openPipe(disk_config, origIn, &pid);
 
     printUncompressedPos =
-            udpc_shouldPrintUncompressedPos(stat_config->printUncompressedPos,
-                                            origIn, in);
+            udpc_shouldPrintUncompressedPos(stat_config->printUncompressedPos, origIn, in);
+    stat_config->printRetransmissions = (net_config->flags & FLAG_ASYNC) == 0;
 
-    stats = allocSenderStats(origIn, stat_config->log, stat_config->bwPeriod,
+    stats = allocSenderStats(origIn, stat_config->log,
+                             stat_config->bwPeriod,
                              stat_config->statPeriod,
                              printUncompressedPos,
-                             stat_config->noProgress);
+                             stat_config->printRetransmissions,
+                             stat_config->noProgress,
+                             disk_config->fileSize);
     udpc_initFifo(&fifo, net_config->blockSize);
     spawnNetSender(&fifo, sock, net_config, db, stats);
     localReader(&fifo, in);

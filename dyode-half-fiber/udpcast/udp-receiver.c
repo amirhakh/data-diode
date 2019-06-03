@@ -156,6 +156,7 @@ int main(int argc, char **argv)
 
     stat_config.statPeriod = DEFLT_STAT_PERIOD;
     stat_config.printUncompressedPos = -1;
+    stat_config.printRetransmissions = -1;
     stat_config.noProgress = 0;
 
 #ifdef WINDOWS

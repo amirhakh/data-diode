@@ -27,12 +27,14 @@ int udpc_smallReadSize(void);
 int udpc_makeDataBuffer(int blocksize);
 int udpc_parseCommand(char *pipeName, char **arg);
 
-int udpc_printLongNum(unsigned long long x);
+int udpc_printLongNum(long long x);
+int udpc_printULongNum(unsigned long long x);
 int udpc_waitForProcess(int pid, const char *message);
 
 struct disk_config {
     int origOutFile;
     const char *fileName;
+    int64_t fileSize;
     char *pipeName;
     int flags;
 
@@ -109,8 +111,9 @@ struct stat_config {
     long bwPeriod; /* How often are bandwidth estimations logged? */
 
     int statPeriod;
-    int printUncompressedPos;
-    int noProgress;
+    char printUncompressedPos;
+    char printRetransmissions;
+    char noProgress;
 };
 
 
@@ -122,7 +125,7 @@ void rgShutdownAll(struct net_config *cfg);
 /**
  * Answers whether given fd is seekable
  */
-int udpc_shouldPrintUncompressedPos(int deflt, int fd, int pipe);
+char udpc_shouldPrintUncompressedPos(char deflt, int fd, int pipe);
 
 #define MAX_SLICE_SIZE 1024
 

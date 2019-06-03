@@ -68,7 +68,7 @@ int flprintf(const char *fmt, ...) {
     }
 }
 
-volatile int quitting = 0;
+static volatile int quitting = 0;
 
 /**
  * Print message to stdout, adding a newline "if needed"
@@ -93,7 +93,56 @@ int fatal(int code, const char *fmt, ...) {
     exit(code);
 }
 
-int printLongNum(unsigned long long x) {
+int printLongNum(long long x) {
+    /*    fprintf(stderr, "%03d ", (int) ( x / 1000000000000LL   ));*/
+    long long divisor;
+    long long minDivisor;
+    int nonzero;
+    char suffix=' ';
+
+    if(x > 1000000000000LL) {
+        minDivisor = 1048576L;
+        suffix='M';
+    } else if(x >= 1000000000) {
+        minDivisor = 1024L;
+        suffix='K';
+    } else {
+        minDivisor = 1;
+        suffix=' ';
+    }
+    divisor = minDivisor * 1000000LL;
+
+    nonzero = 0;
+
+    while(divisor >= minDivisor) {
+        int digits;
+        const char *format;
+
+        digits = (int) ((x / divisor) % 1000);
+        if (nonzero) {
+            format = "%03d";
+        } else {
+            format = "%3d";
+        }
+        if (digits || nonzero)
+            fprintf(stderr, format, digits);
+        else
+            fprintf(stderr, "    ");
+
+        if(digits) {
+            nonzero = 1;
+        }
+        divisor = divisor / 1000;
+        if(divisor >= minDivisor)
+            fprintf(stderr, " ");
+        else
+            fprintf(stderr, "%c", suffix);
+    }
+    needNewline = 1;
+    return 0;
+}
+
+int printULongNum(unsigned long long x) {
     /*    fprintf(stderr, "%03d ", (int) ( x / 1000000000000LL   ));*/
     unsigned long long divisor;
     unsigned long long minDivisor;

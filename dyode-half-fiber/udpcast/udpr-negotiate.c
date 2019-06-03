@@ -233,7 +233,7 @@ int startReceiver(int doWarn,
         {
         case CMD_CONNECT_REPLY:
             client_config.clientNumber = be16toh(Msg.connectReply.clNr);
-            net_config->blockSize = be32toh(Msg.connectReply.blockSize);
+            net_config->blockSize = be16toh(Msg.connectReply.blockSize);
 
             udpc_flprintf("received message, cap=%08lx\n",
                           (long)be32toh(Msg.connectReply.capabilities));
@@ -311,16 +311,18 @@ break_loop:
     atexit(sendDisconnectWrapper);
     {
         struct fifo fifo;
-        int printUncompressedPos =
+        char printUncompressedPos =
                 udpc_shouldPrintUncompressedPos(stat_config->printUncompressedPos,
                                                 origOutFile, pipedOutFile);
+        stat_config->printRetransmissions = (net_config->flags & FLAG_PASSIVE) == 0;
 
         receiver_stats_t stats = allocReadStats(origOutFile,
                                                 stat_config->statPeriod,
                                                 printUncompressedPos,
+                                                stat_config->printRetransmissions,
                                                 stat_config->noProgress);
 
-        udpc_initFifo(&fifo, net_config->blockSize);
+        udpc_initFifo(&fifo, net_config->blockSize * 16);
 
         fifo.data = pc_makeProduconsum(fifo.dataBufSize, "receive");
 

@@ -242,6 +242,7 @@ int main(int argc, char **argv)
     stat_config.log = NULL;
     stat_config.bwPeriod = 0;
     stat_config.printUncompressedPos = -1;
+    stat_config.printRetransmissions = -1;
     stat_config.statPeriod = DEFLT_STAT_PERIOD;
     stat_config.noProgress = 0;
 
@@ -297,7 +298,7 @@ int main(int argc, char **argv)
                 disk_config.pipeName = optarg;
                 break;
             case 'P':
-                net_config.portBase = atoi(optarg);
+                net_config.portBase = (uint16_t)atoi(optarg);
                 break;
             case '1':
                 net_config.flags |= FLAG_POINTOPOINT;
@@ -349,15 +350,15 @@ int main(int argc, char **argv)
 #endif
                 break;
             case 0x0101:
-                net_config.min_slice_size = atoi(optarg);
+                net_config.min_slice_size = (uint32_t) atoi(optarg);
                 if (net_config.min_slice_size > MAX_SLICE_SIZE)
                     fatal(1, "min slice size too big\n");
                 break;
             case 0x0102:
-                net_config.default_slice_size = atoi(optarg);
+                net_config.default_slice_size = (uint32_t) atoi(optarg);
                 break;
             case 0x0103:
-                net_config.max_slice_size = atoi(optarg);
+                net_config.max_slice_size = (uint32_t) atoi(optarg);
                 if (net_config.max_slice_size > MAX_SLICE_SIZE)
                     fatal(1, "max slice size too big\n");
                 break;
@@ -373,7 +374,7 @@ int main(int argc, char **argv)
                 if (ptr)
                 {
                     net_config.fec_stripes =
-                            strtoul(optarg, &eptr, 10);
+                            (uint16_t) strtoul(optarg, &eptr, 10);
                     if (ptr != eptr)
                     {
                         flprintf("%s != %s\n", ptr, eptr);
@@ -386,12 +387,11 @@ int main(int argc, char **argv)
                     net_config.fec_stripes = 8;
                     ptr = optarg;
                 }
-                net_config.fec_redundancy = strtoul(ptr, &eptr, 10);
+                net_config.fec_redundancy = (uint16_t) strtoul(ptr, &eptr, 10);
                 if (*eptr == '/')
                 {
                     ptr = eptr + 1;
-                    net_config.fec_stripesize =
-                            strtoul(ptr, &eptr, 10);
+                    net_config.fec_stripesize = (uint32_t) strtoul(ptr, &eptr, 10);
                 }
                 else
                 {
@@ -412,7 +412,7 @@ int main(int argc, char **argv)
                 stat_config.statPeriod = atoi(optarg) * 1000;
                 break;
             case 'x':
-                stat_config.printUncompressedPos = atoi(optarg);
+                stat_config.printUncompressedPos = (char) atoi(optarg);
                 break;
             case 'L':
                 fec_license();
@@ -446,7 +446,7 @@ int main(int argc, char **argv)
                 net_config.requestedBufSize = parseSize(optarg);
                 break;
             case 'C': /* min-clients */
-                net_config.min_receivers = atoi(optarg);
+                net_config.min_receivers = (int16_t) atoi(optarg);
                 break;
             case 'W': /* max-wait */
                 net_config.max_receivers_wait = atoi(optarg);
@@ -462,7 +462,7 @@ int main(int argc, char **argv)
                 break;
 
             case 'R': /* retries-until-drop */
-                net_config.retriesUntilDrop = atoi(optarg);
+                net_config.retriesUntilDrop = (uint32_t) atoi(optarg);
                 break;
 
             case 'D': /* daemon-mode */
@@ -487,7 +487,7 @@ int main(int argc, char **argv)
                 net_config.flags |= FLAG_STREAMING;
                 break;
             case 'Y':
-                net_config.rehelloOffset = atol(optarg);
+                net_config.rehelloOffset = (uint32_t) atoi(optarg);
                 break;
             default:
             case '?':

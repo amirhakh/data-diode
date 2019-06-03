@@ -8,7 +8,8 @@
 #define logprintf udpc_logprintf
 #define flprintf udpc_flprintf
 #define fatal udpc_fatal
-#define printLongNum udpc_printLongNum 
+#define printLongNum udpc_printLongNum
+#define printULongNum udpc_printULongNum
 
 /*void printNewlineIfNeeded(void);*/
 #ifdef __GNUC__
@@ -24,7 +25,8 @@ int flprintf(const char *fmt, ...) ;
 int fatal(int code, const char *fmt, ...) ;
 #endif
 
-int printLongNum(unsigned long long x);
+int printLongNum(long long x);
+int printULongNum(unsigned long long x);
 
 extern FILE *udpc_log;
 

@@ -18,10 +18,11 @@
 #define DEBUG 0
 
 #define ADR(x, bs) (fifo->dataBuffer + \
-    (slice->base+(x)*bs) % fifo->dataBufSize)
+    (slice->base+(x)*(bs)) % fifo->dataBufSize)
 
 #define SLICEMAGIC 0x41424344
-#define NR_SLICES 4
+#define NR_SLICES 64        // 4 * 16
+#define NR_BLOCKS 65536 // 4096*16
 
 typedef enum slice_state {
     SLICE_FREE,			/* Free slice */
@@ -37,21 +38,21 @@ typedef enum slice_state {
 #ifdef BB_FEATURE_UDPCAST_FEC
 struct fec_desc {
     unsigned char *adr; /* address of FEC block */
-    int64_t fecBlockNo; /* number of FEC block */
-    int64_t erasedBlockNo; /* erased data block */
+    uint32_t fecBlockNo; /* number of FEC block */
+    uint32_t erasedBlockNo; /* erased data block */
 };
 #endif
 
 typedef struct slice {
     int32_t magic;
     volatile slice_state_t state;
-    int64_t base; /* base offset of beginning of slice */
+    uint64_t base; /* base offset of beginning of slice */
     int64_t sliceNo; /* current slice number */
     uint32_t blocksTransferred; /* blocks transferred during this slice */
     uint32_t dataBlocksTransferred; /* data blocks transferred during this slice */
     uint32_t bytes; /* number of bytes in this slice (or 0, if unknown) */
     int32_t bytesKnown; /* is number of bytes known yet? */
-    int64_t freePos; /* where the next data part will be stored to */
+    uint64_t freePos; /* where the next data part will be stored to */
     struct retransmit retransmit;
 
 
@@ -85,14 +86,15 @@ struct clientState {
     
     produconsum_t free_slices_pc;
     struct slice slices[NR_SLICES];
+//    uint16_t slice_pos, slice_free;
 
     /* Completely received slices */
     int64_t receivedPtr;
-    int64_t receivedSliceNo;
+    int64_t receivedSliceNo;        /* Last slice stored */
+    uint16_t receivingSliceWindowSize;       /* Slice window head */
 
-#ifdef BB_FEATURE_UDPCAST_FEC
-    int use_fec; /* do we use forward error correction ? */
-#endif
+    char tempBlock[MAX_BLOCK_SIZE];
+
     produconsum_t fec_data_pc;
     struct slice *fec_slices[NR_SLICES];
     pthread_t fec_thread;
@@ -109,13 +111,17 @@ struct clientState {
     unsigned char *blockData;
     unsigned char *nextBlock;
 
-    int endReached; /* end of transmission reached:
+#ifdef BB_FEATURE_UDPCAST_FEC
+    int8_t use_fec; /* do we use forward error correction ? */
+#endif
+
+    int8_t endReached; /* end of transmission reached:
                0: transmission in progress
                2: network transmission _and_ FEC
                   processing finished
             */
 
-    int netEndReached; /* In case of a FEC transmission; network
+    int8_t netEndReached; /* In case of a FEC transmission; network
             * transmission finished. This is needed to avoid
             * a race condition, where the receiver thread would
             * already prepare to wait for more data, at the same
@@ -126,9 +132,9 @@ struct clientState {
             * against
             */
 
-    int selectedFd;
+    int8_t promptPrinted;  /* Has "Press any key..." prompt already been printed */
 
-    int promptPrinted;  /* Has "Press any key..." prompt already been printed */
+    int selectedFd;
 
 #ifdef BB_FEATURE_UDPCAST_FEC
     fec_code_t fec_code;
@@ -163,7 +169,7 @@ static void printMissedBlockMap(struct clientState *clst, slice_t slice)
                     fprintf(stderr, "FEC blocks: ");
                 else
                     fprintf(stderr, ",");
-                fprintf(stderr, "%lu",slice->fec_descs[i].fecBlockNo);
+                fprintf(stderr, "%u",slice->fec_descs[i].fecBlockNo);
                 first=0;
             }
         }
@@ -190,7 +196,7 @@ static ssize_t sendOk(struct client_config *client_config, int64_t sliceNo)
     struct ok ok;
     ok.opCode = htobe16(CMD_OK);
     ok.reserved = 0;
-    ok.sliceNo = htobe64(sliceNo);
+    ok.sliceNo = (int64_t) htobe64(sliceNo);
     return SSEND(ok);
 }
 
@@ -202,7 +208,7 @@ static ssize_t sendRetransmit(struct clientState *clst,
     assert(slice->magic == SLICEMAGIC);
     slice->retransmit.opCode = htobe16(CMD_RETRANSMIT);
     slice->retransmit.reserved = 0;
-    slice->retransmit.sliceNo = htobe64(slice->sliceNo);
+    slice->retransmit.sliceNo = (int64_t) htobe64(slice->sliceNo);
     slice->retransmit.rxmit = htobe32(rxmit);
     return SSEND(slice->retransmit);
 }
@@ -255,12 +261,12 @@ static struct slice *initSlice(struct clientState *clst,
     BZERO(slice->retransmit);
     slice->freePos = 0;
     slice->bytes = 0;
-    if(clst->currentSlice != NULL) {
-        if(!clst->currentSlice->bytesKnown)
-            udpc_fatal(1, "Previous slice size not known\n");
-        if(clst->net_config->flags & FLAG_IGNORE_LOST_DATA)
-            slice->bytes = clst->currentSlice->bytes;
-    }
+//    if(clst->currentSlice != NULL) {
+//        if(!clst->currentSlice->bytesKnown)
+//            udpc_fatal(1, "Previous slice size not known\n");
+//        if(clst->net_config->flags & FLAG_IGNORE_LOST_DATA)
+//            slice->bytes = clst->currentSlice->bytes;
+//    }
 
     if(!(clst->net_config->flags & FLAG_STREAMING))
         if(clst->currentSliceNo != sliceNo-1) {
@@ -361,6 +367,17 @@ static struct slice *findSlice(struct clientState *clst, int64_t sliceNo)
             sliceNo != clst->currentSliceNo) {
         assert((clst->currentSlice = &clst->slices[0]));
         return initSlice(clst, clst->currentSlice, sliceNo);
+    }
+
+    if(sliceNo < clst->receivedSliceNo + NR_SLICES) // && sliceNo > clst->currentSliceNo
+    {
+        int64_t number = clst->currentSliceNo + 1;
+        struct slice * slice = NULL;
+        while(number <= sliceNo)
+        {
+            slice = newSlice(clst, number++);
+        }
+        return slice;
     }
 
     while(sliceNo > clst->receivedSliceNo + 2 ||
@@ -487,7 +504,7 @@ static void checkSliceComplete(struct clientState *clst,
             clst->net_config->blockSize;
     if(blocksInSlice == slice->blocksTransferred) {
         if(clst->net_config->flags & FLAG_STREAMING) {
-            /* If we are in streaming mode, the storage space for the first
+        /* If we are in streaming mode, the storage space for the first
          * entire slice is only consumed once it is complete. This
          * is because it is only at comletion time that we know
          * for sure that it can be completed (before, we could
@@ -544,7 +561,7 @@ static void fec_decode_one_stripe(struct clientState *clst,
 
     /*    int nrBlocks = (bytes + data->blockSize - 1) / data->blockSize; */
     uint32_t nrBlocks = getSliceBlocks(slice, config);
-    int64_t leftOver = bytes % config->blockSize;
+    uint64_t leftOver = bytes % config->blockSize;
     uint32_t j;
 
     // FIXME: change to malloc
@@ -798,7 +815,7 @@ static int processDataBlock(struct clientState *clst,
         return 0;
     }
 
-    if(sliceNo > clst->currentSliceNo+2)
+    if(sliceNo >= clst->receivedSliceNo + NR_SLICES) //clst->currentSliceNo+2)
         udpc_fatal(1, "We have been dropped by sender\n");
 
     if(BIT_ISSET(blockNo, slice->retransmit.map)) {
@@ -816,7 +833,8 @@ static int processDataBlock(struct clientState *clst,
 
     shouldAddress = ADR(blockNo, clst->net_config->blockSize);
     isAddress = clst->data_hdr.msg_iov[1].iov_base;
-    if(shouldAddress != isAddress) {
+//    if(shouldAddress != isAddress)
+    {
         /* copy message to the correct place */
         memcpy(shouldAddress, isAddress,  clst->net_config->blockSize);
     }
@@ -889,7 +907,7 @@ static int processReqAck(struct clientState *clst,
 #if DEBUG
         flprintf("old slice => sending ok\n");
 #endif
-        return sendOk(clst->client_config, sliceNo);
+        return (int) sendOk(clst->client_config, sliceNo);
     }
 
     setSliceBytes(slice, clst, bytes);
@@ -943,20 +961,20 @@ static int dispatchMessage(struct clientState *clst)
 {
     ssize_t ret;
     struct sockaddr_in lserver;
-    struct fifo *fifo = clst->fifo;
+//    struct fifo *fifo = clst->fifo;
     int fd = -1;
     struct client_config *client_config = clst->client_config;
 
     /* set up message header */
-    if (clst->currentSlice != NULL &&
-            clst->currentSlice->freePos < MAX_SLICE_SIZE) {
-        struct slice *slice = clst->currentSlice;
-        assert(slice == NULL || slice->magic == SLICEMAGIC);
-        clst->data_iov[1].iov_base =
-                ADR(slice->freePos, clst->net_config->blockSize);
-    } else {
-        clst->data_iov[1].iov_base = clst->nextBlock;
-    }
+//    if (clst->currentSlice != NULL &&
+//            clst->currentSlice->freePos < MAX_SLICE_SIZE) {
+//        struct slice *slice = clst->currentSlice;
+//        assert(slice->magic == SLICEMAGIC);
+//        clst->data_iov[1].iov_base =
+//                ADR(slice->freePos, clst->net_config->blockSize);
+//    } else {
+//        clst->data_iov[1].iov_base = clst->nextBlock;
+//    }
 
     clst->data_iov[1].iov_len = clst->net_config->blockSize;
     clst->data_hdr.msg_iovlen = 2;
@@ -1142,6 +1160,8 @@ static int setupMessages(struct clientState *clst) {
     /* the messages received from the server */
     clst->data_iov[0].iov_base = (void *)&clst->Msg;
     clst->data_iov[0].iov_len = sizeof(clst->Msg);
+
+    clst->data_iov[1].iov_base = clst->tempBlock;
     
     /* namelen set just before reception */
     clst->data_hdr.msg_iov = clst->data_iov;
@@ -1151,11 +1171,20 @@ static int setupMessages(struct clientState *clst) {
     return 0;
 }
 
+static int setMaximumPriorityThread()
+{
+    pthread_t this_thread = pthread_self();
+    struct sched_param params;
+    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    return pthread_setschedparam(this_thread, SCHED_FIFO, &params);
+}
+
 static THREAD_RETURN netReceiverMain(void *args0)
-{    
+{
     struct clientState *clst = (struct clientState *) args0;
 
-    clst->currentSliceNo = 0;
+    setMaximumPriorityThread();
+
     setupMessages(clst);
     
     clst->currentSliceNo = -1l;
@@ -1164,7 +1193,6 @@ static THREAD_RETURN netReceiverMain(void *args0)
     if(! (clst->net_config->flags & FLAG_STREAMING))
         newSlice(clst, 0);
     else {
-        clst->currentSlice = NULL;
         clst->currentSliceNo = 0;
     }
 
@@ -1184,7 +1212,7 @@ int spawnNetReceiver(struct fifo *fifo,
                      receiver_stats_t stats)
 {
     uint32_t i;
-    struct clientState  *clst = MALLOC(struct clientState);
+    struct clientState *clst = MALLOC(struct clientState);
     clst->fifo = fifo;
     clst->client_config = client_config;
     clst->net_config = net_config;
@@ -1192,6 +1220,8 @@ int spawnNetReceiver(struct fifo *fifo,
     clst->endReached = 0;
     clst->netEndReached = 0;
     clst->selectedFd = -1;
+    clst->localPos = 0;
+    clst->receivedPtr = 0;
 
     clst->free_slices_pc = pc_makeProduconsum(NR_SLICES, "free slices");
     pc_produce(clst->free_slices_pc, NR_SLICES);
@@ -1201,6 +1231,7 @@ int spawnNetReceiver(struct fifo *fifo,
     }
     clst->receivedPtr = 0;
     clst->receivedSliceNo = -1l;
+    clst->receivingSliceWindowSize = 0;
 
 #ifdef BB_FEATURE_UDPCAST_FEC
     fec_init(); /* fec new involves memory
@@ -1209,7 +1240,6 @@ int spawnNetReceiver(struct fifo *fifo,
     clst->fec_data_pc = pc_makeProduconsum(NR_SLICES, "fec data");
 #endif
 
-#define NR_BLOCKS 4096
     clst->freeBlocks_pc = pc_makeProduconsum(NR_BLOCKS, "free blocks");
     pc_produce(clst->freeBlocks_pc, NR_BLOCKS);
     clst->blockAddresses = calloc(NR_BLOCKS, sizeof(char *));
@@ -1220,5 +1250,8 @@ int spawnNetReceiver(struct fifo *fifo,
     clst->localPos=0;
 
     setNextBlock(clst);
+
+    setMaximumPriorityThread();
+
     return pthread_create(&client_config->thread, NULL, netReceiverMain, clst);
 }

@@ -1,3 +1,7 @@
+udp-receiver
+udp-receiver.1
+udp-sender
+udp-sender.1
 *.o
 *.ipch
 *.bin

@@ -254,9 +254,9 @@ static void generate_gf(void)
     for (i = GF_BITS + 1; i < GF_SIZE; i++)
     {
         if (gf_exp[i - 1] >= mask)
-            gf_exp[i] = gf_exp[GF_BITS] ^ ((gf_exp[i - 1] ^ mask) << 1);
+            gf_exp[i] = (gf) (gf_exp[GF_BITS] ^ ((gf_exp[i - 1] ^ mask) << 1));
         else
-            gf_exp[i] = gf_exp[i - 1] << 1;
+            gf_exp[i] = (gf) (gf_exp[i - 1] << 1);
         gf_log[gf_exp[i]] = i;
     }
     /*
@@ -672,9 +672,9 @@ found_piv:
     for (col = k - 1; col >= 0; col--)
     {
         if (indxr[col] < 0 || indxr[col] >= k)
-            fprintf(stderr, "AARGH, indxr[col] %d\n", indxr[col]);
+            fprintf(stderr, "AARGH, indxr[col] %d, %d\n", indxr[col], k);
         else if (indxc[col] < 0 || indxc[col] >= k)
-            fprintf(stderr, "AARGH, indxc[col] %d\n", indxc[col]);
+            fprintf(stderr, "AARGH, indxc[col] %d, %d\n", indxc[col], k);
         else if (indxr[col] != indxc[col])
         {
             for (row = 0; row < k; row++)
@@ -798,7 +798,7 @@ void fec_init(void)
  * few (typically, 4 or 8) that they will fit easily in the cache (even
  * in the L2 cache...)
  */
-void fec_encode(int blockSize,
+void fec_encode(unsigned int blockSize,
                 unsigned char **data_blocks,
                 unsigned int nrDataBlocks,
                 unsigned char **fec_blocks,
@@ -832,16 +832,16 @@ void fec_encode(int blockSize,
  * (with size being number of blocks lost, rather than number of data blocks
  * + fec)
  */
-static inline void reduce(int blockSize,
+static inline void reduce(unsigned int blockSize,
                           unsigned char **data_blocks,
-                          int nr_data_blocks,
+                          unsigned int nr_data_blocks,
                           unsigned char **fec_blocks,
                           unsigned int *fec_block_nos,
                           unsigned int *erased_blocks,
-                          short nr_fec_blocks)
+                          unsigned short nr_fec_blocks)
 {
-    int erasedIdx = 0;
-    int col;
+    unsigned short erasedIdx = 0;
+    unsigned short col;
 
     /* First we reduce the code vector by subtracting all known elements
      * (non-erased data packets) */
@@ -884,12 +884,12 @@ long long invTime =0;
  * Resolves reduced system. Constructs "mini" encoding matrix, inverts
  * it, and multiply reduced vector by it.
  */
-static inline void resolve(int blockSize,
+static inline void resolve(unsigned int blockSize,
                            unsigned char **data_blocks,
                            unsigned char **fec_blocks,
                            unsigned int *fec_block_nos,
                            unsigned int *erased_blocks,
-                           short nr_fec_blocks)
+                           unsigned short nr_fec_blocks)
 {
 #ifdef PROFILE
     long long begin;
@@ -908,11 +908,11 @@ static inline void resolve(int blockSize,
     for (row = 0, ptr = 0; row < nr_fec_blocks; row++)
     {
         int col;
-        int irow = 128 + fec_block_nos[row];
+        unsigned int irow = 128 + fec_block_nos[row];
         /*assert(irow < fec_blocks+128);*/
         for (col = 0; col < nr_fec_blocks; col++, ptr++)
         {
-            int icol = erased_blocks[col];
+            unsigned int icol = erased_blocks[col];
             matrix[ptr] = inverse[irow ^ icol];
         }
     }
@@ -953,13 +953,13 @@ static inline void resolve(int blockSize,
     }
 }
 
-void fec_decode(int blockSize,
+void fec_decode(unsigned int blockSize,
                 unsigned char **data_blocks,
-                int nr_data_blocks,
+                unsigned int nr_data_blocks,
                 unsigned char **fec_blocks,
                 unsigned int *fec_block_nos,
                 unsigned int *erased_blocks,
-                short nr_fec_blocks)
+                unsigned short nr_fec_blocks)
 {
 #ifdef PROFILE
     long long begin;

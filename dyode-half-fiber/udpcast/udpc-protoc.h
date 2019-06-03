@@ -33,16 +33,18 @@ enum opCode {
 
     CMD_HELLO_NEW,	  /* sender says he's up */
     CMD_HELLO_STREAMING,  /* retransmitted hello during streaming mode */
+
+    /* Sender says he's up. This is not in the enum with the others,
+     * because of some endianness Snafu in early versions. However,since
+     * 2005-12-23, new receivers now understand a CMD_HELLO_NEW which is
+     * in sequence. Once enough of those are out in the field, we'll send
+     * CMD_HELLO_NEW by default, and then phase out the old variant. */
+     /* Tried to remove this on 2009-08-30, but noticed that receiver was printing
+     * "unexpected opcode" on retransmitted hello
+     */
+    CMD_HELLO = 0x0500,
 };
 
-/* Sender says he's up. This is not in the enum with the others,
- * because of some endianness Snafu in early versions. However,since
- * 2005-12-23, new receivers now understand a CMD_HELLO_NEW which is
- * in sequence. Once enough of those are out in the field, we'll send
- * CMD_HELLO_NEW by default, and then phase out the old variant. */
-/* Tried to remove this on 2009-08-30, but noticed that receiver was printing
- * "unexpected opcode" on retransmitted hello */
-#define CMD_HELLO 0x0500
 
 struct ok {
     uint16_t opCode;
@@ -89,9 +91,9 @@ union clientMsg {
 struct connectReply {
     uint16_t opCode;
     int16_t clNr;
-    int32_t blockSize;
     uint32_t capabilities;
     unsigned char mcastAddr[16]; /* provide enough place for IPV6 */
+    uint16_t blockSize;
 };
 
 struct hello {
@@ -143,9 +145,16 @@ union serverDataMsg {
     struct fecBlock fecBlock;
 };
 
+struct serverDataStruct {
+    union serverDataMsg Msg;
+    unsigned char data[MAX_BLOCK_SIZE];
+};
+
 /* ============================================
  * Capabilities
  */
+
+enum Capabilities{
 
 /* Does the receiver support the new CMD_DATA command, which carries
  * capabilities mask?
@@ -154,34 +163,30 @@ union serverDataMsg {
  *   - receiver multicast capable
  *   - receiver can receive ASYNC and SN
  */
-#define CAP_NEW_GEN 0x0001
+    CAP_NEW_GEN = 0x0001,
 
-/* Use multicast instead of Broadcast for data */
-/*#define CAP_MULTICAST 0x0002*/
+    /* Use multicast instead of Broadcast for data */
+    /*#define CAP_MULTICAST 0x0002*/
 
 #ifdef BB_FEATURE_UDPCAST_FEC
-/* Forward error correction */
-#define CAP_FEC 0x0004
+    /* Forward error correction */
+    CAP_FEC = 0x0004,
 #endif
 
-/* Supports big endians (a.k.a. network) */
-#define CAP_BIG_ENDIAN 0x0008
+    /* Supports big endians (a.k.a. network) */
+    CAP_BIG_ENDIAN = 0x0008,
 
-/* Support little endians (a.k.a. PC) ==> obsolete! */
-#define CAP_LITTLE_ENDIAN 0x0010
+    /* Support little endians (a.k.a. PC) ==> obsolete! */
+    CAP_LITTLE_ENDIAN = 0x0010,
 
-/* This transmission is asynchronous (no receiver reply) */
-#define CAP_ASYNC 0x0020
+    /* This transmission is asynchronous (no receiver reply) */
+    CAP_ASYNC = 0x0020,
 
-/* Sender currently supports CAPABILITIES and MULTICAST */
-#define SENDER_CAPABILITIES ( \
-    CAP_NEW_GEN | \
-    CAP_BIG_ENDIAN)
+    /* Sender currently supports CAPABILITIES and MULTICAST */
+    SENDER_CAPABILITIES = (CAP_NEW_GEN | CAP_BIG_ENDIAN),
 
 
-#define RECEIVER_CAPABILITIES ( \
-    CAP_NEW_GEN | \
-    CAP_BIG_ENDIAN)
-
+    RECEIVER_CAPABILITIES = (CAP_NEW_GEN | CAP_BIG_ENDIAN),
+};
 
 #endif

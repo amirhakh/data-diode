@@ -34,6 +34,8 @@ int openFile(struct disk_config *config)
             udpc_fatal(1, "Could not open file %s: %s\n", config->fileName,
                        strerror(errno));
         }
+        config->fileSize = lseek(in, 0, SEEK_END);
+        lseek(in,0,SEEK_SET);
         return in;
     } else {
 #ifdef __MINGW32__

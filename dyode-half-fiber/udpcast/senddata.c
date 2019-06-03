@@ -23,7 +23,7 @@
 #define DEBUG 0
 
 typedef struct slice {
-    int64_t base; /* base address of slice in buffer */
+    uint64_t base; /* base address of slice in buffer */
     int64_t sliceNo;
     uint32_t bytes; /* bytes in slice */
     uint32_t nextBlock; /* index of next buffer to be transmitted */
@@ -161,7 +161,7 @@ static struct slice *makeSlice(sender_state_t sendst, int64_t sliceNo) {
 
     slice->base = pc_getConsumerPosition(sendst->fifo->data);
     slice->sliceNo = sliceNo;
-    slice->bytes = pc_consume(fifo->data, 10*config->blockSize);
+    slice->bytes = (uint32_t) pc_consume(fifo->data, 10*config->blockSize);
     slice->rxmitId = 0;
 
     /* fixme: use current slice size here */
@@ -254,7 +254,7 @@ static int transmitDataBlock(sender_state_t sendst, struct slice *slice, uint16_
                 (char *) &msg, sizeof(msg),
                 fifo->dataBuffer +
                 (slice->base + i * config->blockSize) % fifo->dataBufSize,
-                size);
+                (size_t) size);
     return 0;
 }
 
@@ -358,10 +358,10 @@ static int sendSlice(sender_state_t sendst,
         }
 
         if(i < nrBlocks)
-            transmitDataBlock(sendst, slice, i);
+            transmitDataBlock(sendst, slice, (uint16_t) i);
 #ifdef BB_FEATURE_UDPCAST_FEC
         else
-            transmitFecBlock(sendst, slice, i - nrBlocks);
+            transmitFecBlock(sendst, slice, (uint16_t) (i - nrBlocks));
 #endif
         if(!retransmitting && pc_getWaiting(sendst->rc.incoming)) {
             i++;
@@ -650,7 +650,8 @@ static int handleNextMessage(sender_state_t sendst,
     switch(be16toh(msg->opCode)) {
     case CMD_OK:
         handleOk(sendst,
-                 findSlice(xmitSlice, rexmitSlice, be64toh(msg->ok.sliceNo)),
+                 findSlice(xmitSlice, rexmitSlice,
+                           be64toh(msg->ok.sliceNo)),
                  clNo);
         break;
     case CMD_DISCONNECT:
@@ -846,7 +847,8 @@ static THREAD_RETURN netSenderMain(void	*args0)
                     i = pc_getConsumerPosition(sendst->fec_data_pc);
                     xmitSlice = &sendst->slices[i];
                     pc_consumed(sendst->fec_data_pc, 1);
-                } else
+                }
+                else
 #endif
                 {
                     xmitSlice = makeSlice(sendst, sliceNo++);

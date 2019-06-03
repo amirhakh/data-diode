@@ -6,6 +6,7 @@
 #include "statistics.h"
 #include "console.h"
 #include "udpcast.h"
+#include "fifo.h"
 
 #define S_UCAST 0
 #define S_BCAST 1
@@ -23,8 +24,6 @@ struct client_config {
     int sender_is_newgen;
     console_t *console;
 };
-
-struct fifo;
 
 #define spawnNetReceiver udpc_spawnNetReceiver
 #define writer udpc_writer
@@ -51,36 +50,32 @@ int startReceiver(int doWarn,
 
 #define SSEND(x) SEND(client_config->socks[S_UCAST], x, client_config->serverAddr)
 
-/**
+enum ReceiverFlag {
+/*
  * Receiver will passively listen to sender. Works best if sender runs
  * in async mode
  */
-#define FLAG_PASSIVE 0x0010
-
-
-/**
+    FLAG_PASSIVE = 0x0010,
+/*
  * Do not write file synchronously
  */
-#define FLAG_NOSYNC 0x0040
-
+    FLAG_NOSYNC = 0x0040,
 /*
  * Don't ask for keyboard input on receiver end.
  */
-#define FLAG_NOKBD 0x0080
-
-/**
+    FLAG_NOKBD = 0x0080,
+/*
  * Do write file synchronously
  */
-#define FLAG_SYNC 0x0100
-
-/**
+    FLAG_SYNC = 0x0100,
+/*
  * Streaming mode
  */
-#define FLAG_STREAMING 0x200
-
-/**
+    FLAG_STREAMING = 0x200,
+/*
  * Ignore lost data
  */
-#define FLAG_IGNORE_LOST_DATA 0x400
+    FLAG_IGNORE_LOST_DATA = 0x400,
+};
 
 #endif

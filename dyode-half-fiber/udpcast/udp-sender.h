@@ -6,10 +6,9 @@
 #include "participants.h"
 #include "statistics.h"
 #include "socklib.h"
+#include "fifo.h"
 
 extern FILE *udpc_log;
-
-struct fifo;
 
 #define openFile udpc_openFile
 #define openPipe udpcs_openPipe
@@ -44,68 +43,70 @@ int startSender(struct disk_config *disk_config,
     doSend(s, &msg, sizeof(msg), &net_config->dataMcastAddr)
 
 
-/**
- * "switched network" mode: server already starts sending next slice before
- * first one is acknowledged. Do not use on old coax networks
- */
-#define FLAG_SN    0x0001
+enum SenderFlag{
+    /**
+     * "switched network" mode: server already starts sending next slice before
+     * first one is acknowledged. Do not use on old coax networks
+     */
+    FLAG_SN   =  0x0001,
 
-/**
- * "not switched network" mode: network is known not to be switched
- */
-#define FLAG_NOTSN    0x0002
+    /**
+     * "not switched network" mode: network is known not to be switched
+     */
+    FLAG_NOTSN    = 0x0002,
 
-/**
- * Asynchronous mode: do not any confirmation at all from clients.
- * Useful in situations where no return channel is available
- */
-#define FLAG_ASYNC 0x0004
-
-
-/**
- * Point-to-point transmission mode: use unicast in the (frequent)
- * special case where there is only one receiver.
- */
-#define FLAG_POINTOPOINT 0x0008
+    /**
+     * Asynchronous mode: do not any confirmation at all from clients.
+     * Useful in situations where no return channel is available
+     */
+    FLAG_ASYNC = 0x0004,
 
 
-/**
- * Do automatic rate limitation by monitoring socket's send buffer
- * size. Not very useful, as this still doesn't protect against the
- * switch dropping packets because its queue (which might be slightly slower)
- * overruns
- */
-#ifndef WINDOWS
-#define FLAG_AUTORATE 0x0008
-#endif
-
-#ifdef BB_FEATURE_UDPCAST_FEC
-/**
- * Forward error correction
- */
-#define FLAG_FEC 0x0010
-#endif
-
-/**
- * Use broadcast rather than multicast (useful for cards that don't support
- * multicast correctly
- */
-#define FLAG_BCAST 0x0020
-
-/**
- * Never use point-to-point, even if only one receiver
- */
-#define FLAG_NOPOINTOPOINT 0x0040
+    /**
+     * Point-to-point transmission mode: use unicast in the (frequent)
+     * special case where there is only one receiver.
+     */
+    FLAG_POINTOPOINT = 0x0008,
 
 
-/*
- * Don't ask for keyboard input on sender end.
- */
-#define FLAG_NOKBD 0x0080
+    /**
+     * Do automatic rate limitation by monitoring socket's send buffer
+     * size. Not very useful, as this still doesn't protect against the
+     * switch dropping packets because its queue (which might be slightly slower)
+     * overruns
+     */
+    #ifndef WINDOWS
+    FLAG_AUTORATE = 0x0008,
+    #endif
 
-/**
- * Streaming mode: allow receiver to join a running transmission
- */
-#define FLAG_STREAMING 0x0100
+    #ifdef BB_FEATURE_UDPCAST_FEC
+    /**
+     * Forward error correction
+     */
+    FLAG_FEC = 0x0010,
+    #endif
+
+    /**
+     * Use broadcast rather than multicast (useful for cards that don't support
+     * multicast correctly
+     */
+    FLAG_BCAST = 0x0020,
+
+    /**
+     * Never use point-to-point, even if only one receiver
+     */
+    FLAG_NOPOINTOPOINT = 0x0040,
+
+
+    /*
+     * Don't ask for keyboard input on sender end.
+     */
+    FLAG_NOKBD = 0x0080,
+
+    /**
+     * Streaming mode: allow receiver to join a running transmission
+     */
+    FLAG_STREAMING = 0x0100,
+};
 
 #endif

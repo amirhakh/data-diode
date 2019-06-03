@@ -11,8 +11,9 @@ struct stats {
     int fd;
     struct timeval lastPrinted;
     long statPeriod;
-    int64_t printUncompressedPos;
-    int noProgress;
+    char printUncompressedPos;
+    char printRetransmissions;
+    char noProgress;
 };
 
 struct receiver_stats {
@@ -25,10 +26,11 @@ struct receiver_stats {
 
 struct sender_stats {
     FILE *log;
-    uint64_t totalBytes;
-    uint64_t retransmissions;
+    int64_t transferedBytes;
+    int64_t totalBytes;
+    int64_t retransmissions;
     int32_t clNo;
-    unsigned long periodBytes;
+    int64_t periodBytes;
     struct timeval periodStart;
     long bwPeriod;
     struct stats s;
@@ -43,8 +45,9 @@ typedef struct sender_stats *sender_stats_t;
 #define displayReceiverStats udpc_displayReceiverStats
 
 receiver_stats_t udpc_allocReadStats(int fd, long statPeriod,
-                                     int printUncompressedPos,
-                                     int noProgress);
+                                     char printUncompressedPos,
+                                     char printRetransmissions,
+                                     char noProgress);
 void udpc_receiverStatsStartTimer(receiver_stats_t);
 void udpc_receiverStatsAddBytes(receiver_stats_t, int64_t bytes);
 void udpc_displayReceiverStats(receiver_stats_t, int isFinal);
@@ -56,8 +59,9 @@ void udpc_displayReceiverStats(receiver_stats_t, int isFinal);
 #define senderSetAnswered udpc_senderSetAnswered
 
 sender_stats_t udpc_allocSenderStats(int fd, FILE *logfile, long bwPeriod,
-                                     long statPeriod, int printUncompressedPos,
-                                     int noProgress);
+                                     long statPeriod, char printUncompressedPos,
+                                     char printRetransmissions,
+                                     char noProgress, int64_t totalBytes);
 void udpc_senderStatsAddBytes(sender_stats_t, int64_t bytes);
 void udpc_senderStatsAddRetransmissions(sender_stats_t ss, 
                                         uint64_t retransmissions);

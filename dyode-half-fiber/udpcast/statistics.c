@@ -39,24 +39,27 @@ static int shouldPrint(struct stats *s, struct timeval *now, int isFinal) {
 }
 
 static void initStats(struct stats *s,
-                      int fd, long statPeriod, int printUncompressedPos,
-                      int noProgress)
+                      int fd, long statPeriod,
+                      char printUncompressedPos,
+                      char printRetransmissions,
+                      char noProgress)
 {
     struct timeval now;
     gettimeofday(&now, 0);
     s->fd = fd;
     s->statPeriod = statPeriod;
     s->printUncompressedPos = printUncompressedPos;
+    s->printRetransmissions = printRetransmissions;
     s->lastPrinted = now;
     s->noProgress = noProgress;
 }
 
-receiver_stats_t allocReadStats(int fd,
-                                long statPeriod,
-                                int printUncompressedPos,
-                                int noProgress) {
+receiver_stats_t allocReadStats(int fd, long statPeriod,
+                                char printUncompressedPos,
+                                char printRetransmissions,
+                                char noProgress) {
     receiver_stats_t rs =  MALLOC(struct receiver_stats);
-    initStats(&rs->s, fd, statPeriod, printUncompressedPos, noProgress);
+    initStats(&rs->s, fd, statPeriod, printUncompressedPos, printRetransmissions, noProgress);
     return rs;
 }
 
@@ -90,7 +93,7 @@ static void printFilePosition(int fd)
                 buf[n]='\0';
                 num = strpbrk(buf, "0123456789");
                 offset = strtoull(num, 0, 10);
-                printLongNum(offset);
+                printULongNum(offset);
             }
             close(pfd);
         } else {
@@ -111,7 +114,7 @@ static void printFilePosition(int fd)
 }
 
 
-int udpc_shouldPrintUncompressedPos(int deflt, int fd, int ref)
+char udpc_shouldPrintUncompressedPos(char deflt, int fd, int ref)
 {
     if(deflt != -1)
         return deflt;
@@ -163,19 +166,22 @@ void displayReceiverStats(receiver_stats_t rs, int isFinal) {
 
 
 sender_stats_t allocSenderStats(int fd, FILE *logfile, long bwPeriod,
-                                long statPeriod, int printUncompressedPos,
-                                int noProgress) {
+                                long statPeriod, char printUncompressedPos,
+                                char printRetransmissions,
+                                char noProgress, int64_t totalBytes) {
     sender_stats_t ss = MALLOC(struct sender_stats);
     ss->log = logfile;
+    ss->transferedBytes = 0;
+    ss->totalBytes = totalBytes;
     ss->bwPeriod = bwPeriod;
     gettimeofday(&ss->periodStart, 0);
-    initStats(&ss->s, fd, statPeriod, printUncompressedPos, noProgress);
+    initStats(&ss->s, fd, statPeriod, printUncompressedPos, printRetransmissions, noProgress);
     return ss;
 }
 
 void senderStatsAddBytes(sender_stats_t ss, int64_t bytes) {
     if(ss != NULL) {
-        ss->totalBytes += bytes;
+        ss->transferedBytes += bytes;
 
         if(ss->bwPeriod) {
             double tdiff, bw;
@@ -208,8 +214,9 @@ void senderStatsAddRetransmissions(sender_stats_t ss, uint64_t retransmissions) 
 
 void displaySenderStats(sender_stats_t ss, uint32_t blockSize, uint32_t sliceSize,
                         int isFinal) {
-    uint64_t blocks;
-    uint32_t percent;
+    int64_t blocks;
+    int32_t filePercent;
+    int32_t percent;
     struct timeval tv_now;
     
     if(ss == NULL || ss->s.noProgress)
@@ -219,19 +226,30 @@ void displaySenderStats(sender_stats_t ss, uint32_t blockSize, uint32_t sliceSiz
     if(!shouldPrint(&ss->s, &tv_now, isFinal))
         return;
 
-    blocks = (ss->totalBytes + blockSize - 1) / blockSize;
+    if(ss->totalBytes)
+        filePercent = (int32_t)(1000 * ss->transferedBytes / ss->totalBytes);
+    else
+        filePercent = 0;
+
+    blocks = (ss->transferedBytes + blockSize - 1) / blockSize;
     if(blocks == 0)
         percent = 0;
     else
-        percent = (uint32_t)(1000L * ss->retransmissions) / blocks;
+        percent = (int32_t)(1000L * ss->retransmissions) / blocks;
     
     fprintf(stderr, "bytes=");
+    printLongNum(ss->transferedBytes);
+    fprintf(stderr, "/");
     printLongNum(ss->totalBytes);
-    fprintf(stderr, " re-xmits=%07lu (%3u.%01u%%) slice=%04d ",
-            ss->retransmissions, percent / 10, percent % 10, sliceSize);
-    if(ss->s.printUncompressedPos)
+    fprintf(stderr, " (%3u.%01u%%) slice=%04d ",
+            filePercent / 10, filePercent % 10,
+            sliceSize);
+    if(ss->s.printUncompressedPos>0)
         printFilePosition(ss->s.fd);
-    fprintf(stderr, "- %3d\r", ss->clNo);
+    if(ss->s.printRetransmissions>0)
+        fprintf(stderr, " re-xmits=%07lu (%3u.%01u%%) ",
+                ss->retransmissions, percent / 10, percent % 10);
+    fprintf(stderr, " - %3d\r", ss->clNo);
     fflush(stderr);
 }
 
