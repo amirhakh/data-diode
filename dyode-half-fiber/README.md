@@ -28,3 +28,4 @@ You can take a look at the video to learn more about the usage, and ``INSTALL.md
 
 * ~~file transfer bigger than 2G~~
 * transfer speed over 300 Mb/s UDP packet unordered receive
+* `udp-receiver` 1.5s delay on close (thread join and disk write)
