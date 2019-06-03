@@ -8,6 +8,7 @@ Wants=network.service
 User=diode
 EnvironmentFile=/opt/dyode/env
 ExecStartPre=+/usr/sbin/arp -s $OUT_IP $OUT_MAC
+ExecStartPre=/bin/sleep 10
 WorkingDirectory=/opt/dyode/
 ExecStart=/usr/bin/python /opt/dyode/dyode_in.py
 Restart=on-failure

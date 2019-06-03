@@ -16,13 +16,23 @@ modules:
   diode_1:
     type: folder
     port: 9700
-    bitrate: 500 # in Mb/s
+    bitrate: 300 # in Mb/s
     timeout: 10  # in second
+    fec: "4x4"
     in: /data/diode
     out: /data/diode
     temp: /data/temp
-#  syslog_1:
-#    type: syslog
-#    src_port: 514 # check for user access
-#    dst_ip: 1.2.3.4
-#    dst_port: 514
+  repo_diode:
+    type: folder
+    port: 9600
+    bitrate: 300
+    timeout: 5
+    fec: "8x8"
+    in: /data/repo
+    out: /data/repo
+    temp: /data/temp
+  syslog_1:
+    type: syslog
+    src_port: 514 # check for user access
+    dst_ip: 1.2.3.4
+    dst_port: 514

@@ -34,10 +34,12 @@ def watch_folder(properties):
     log.debug('Function "folder" launched with params %s: ' % properties)
 
     # inotify kernel watchdog stuff
+    excl_lst = ['.*\.tmp']
+    excl = pyinotify.ExcludeFilter(excl_lst)
     wm = pyinotify.WatchManager()
     mask = pyinotify.IN_CLOSE_WRITE
     notifier = pyinotify.AsyncNotifier(wm, EventHandler())
-    wdd = wm.add_watch(properties['in'], mask, rec=True)
+    wdd = wm.add_watch(properties['in'], mask, rec=True, auto_add=True, exclude_filter=excl)
     log.debug('watching :: %s' % properties['in'])
     asyncore.loop()
 
