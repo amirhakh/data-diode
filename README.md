@@ -1,5 +1,7 @@
 # Data Diode
 
+This project improve [data-diode](https://github.com/wavestone-cdt/dyode) project for better service in fast environment.
+
 ## Future
 
 * SMB file share
@@ -14,7 +16,7 @@
 
 * migrate to python 3
 * one port for sync and some command
-* error list log
+* error log file
 * destination folder empty size check
 * syslog redirect
 * repository (nexus, ubuntu, windows)
