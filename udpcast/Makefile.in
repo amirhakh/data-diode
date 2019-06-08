@@ -38,7 +38,7 @@ EXESUFFIX=@EXESUFFIX@
 
 CFLAGS += -DNO_BB
 
-all: udp-receiver$(EXESUFFIX) udp-sender$(EXESUFFIX) \
+all: udp-redirect$(EXESUFFIX) udp-receiver$(EXESUFFIX) udp-sender$(EXESUFFIX) \
 	manpages
 #all: fec-test
 
@@ -47,19 +47,24 @@ disk: udpcast.img.gz
 #disks: sender.img.gz receiver.img.gz
 
 clean:
-	rm -f *.o udp-sender$(EXESUFFIX) udp-receiver$(EXESUFFIX) \
-	udp-sender.1 udp-receiver.1 *~
+	rm -f *.o  udp-redirect$(EXESUFFIX) udp-sender$(EXESUFFIX) udp-receiver$(EXESUFFIX) \
+	udp-redirect.1 udp-sender.1 udp-receiver.1 *~
 
 distclean: clean
 	rm -f Makefile config.status config.log config.h
 
-install: udp-sender udp-receiver rateGovernor.h
+install: udp-redirect udp-sender udp-receiver rateGovernor.h
 	install -d $(DESTDIR)$(prefix)/sbin
-	install -m 755 udp-sender udp-receiver $(DESTDIR)$(prefix)/sbin
+	install -m 755 udp-sender udp-receiver udp-redirect $(DESTDIR)$(prefix)/sbin
 	install -d $(DESTDIR)$(mandir)/man1
-	install -m 644 udp-sender.1 udp-receiver.1 $(DESTDIR)$(mandir)/man1
+	install -m 644 udp-redirect.1 udp-sender.1 udp-receiver.1 $(DESTDIR)$(mandir)/man1
 	install -d $(DESTDIR)$(prefix)/include/udpcast
 	install -m 644 rateGovernor.h $(DESTDIR)$(prefix)/include/udpcast
+
+uninstall:
+	cd $(DESTDIR)$(prefix)/sbin/; rm -f udp-sender udp-receiver udp-redirect
+	cd $(DESTDIR)$(mandir)/man1/; rm -f udp-redirect.1 udp-sender.1 udp-receiver.1
+	rm -rf $(DESTDIR)$(prefix)/include/udpcast
 
 udp-sender$(EXESUFFIX): udp-sender.o socklib.o udpcast.o \
 	rateGovernor.o rate-limit.o auto-rate.o \
@@ -75,7 +80,11 @@ udp-receiver$(EXESUFFIX): udp-receiver.o socklib.o udpcast.o \
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 
-cmd.html.man: udp-receiver.txt udp-sender.txt cmd.html
+udp-redirect$(EXESUFFIX): udp-redirect.o
+	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
+
+
+cmd.html.man: udp-redirect.txt udp-receiver.txt udp-sender.txt cmd.html
 	cat $^ | m4 >cmd.html.man
 
 manpages: html2man.pl cmd.html.man
@@ -137,4 +146,4 @@ $(BBTARGET)/Config.in: Config.in
 bb: bbcopy
 	make -C $(BUSYBOX)
 
-.PHONY: manpages
+.PHONY: manpages uninstall

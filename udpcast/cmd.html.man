@@ -619,6 +619,59 @@ Considering these, change parameters as follows:
  value.</li>
 </ul>
 
+
+<!--
+
+<!-- =defdoc udp-redirect udp-redirect 1 -->
+<!-- =section udp-redirect NAME -->
+<!-- =text udp-redirect - redirect UDP packet on a LAN -->
+<!-- =section udp-redirect AUTHOR -->
+<!-- =text Ivan Tikhonov -->
+<!-- =section udp-redirect SYNOPSIS -->
+<!-- =text
+udp-redirect -r <i>rcv-ip:port</i> [-s <i>send-ip</i>[:<i>send-port</i>]] [-d <i>dest-ip</i>[:<i>dest-port</i>]]
+<!-- =stop -->
+
+-->
+
+<h1>Udp-redirect</h1>
+<!-- =cont -->
+
+<p><tt>Udp-redirect</tt> is used to redirect udp packet.</p>
+<p><tt>Usage:</tt>
+udp-redirect recv-ip:port [dest-ip[:port]]
+udp-redirect recv-ip:port send-ip:port [dest-ip[:port]]
+udp-redirect -r rcv-ip:port [-s send-ip[:send-port]] [-d dest-ip[:dest-port]]
+udp-redirect recv-ip port  # can seprate ip port
+</p>
+
+<!-- =section udp-redirect OPTIONS -->
+
+<h2>Basic options</h2>
+
+<dl>
+
+<dt>recv-ip</dt>
+<dd>Listen IP that rcvfrom from it. Can set to <i>0.0.0.0</i> 
+to get packet from any source IP.</dd>
+
+<dt>recv-port</dt>
+<dd>Listen port that get from it.</dd>
+
+<dt>send-ip</dt>
+<dd>Send packet from this IP address (for multiple interface).</dd>
+
+<dt>send-port</dt>
+<dd>Send packet port (for change src_port).</dd>
+
+<dt>dest-ip</dt>
+<dd>Destination send IP address.</dd>
+
+<dt>dest-port</dt>
+<dd>Destination send port.</dd>
+
+</dl>
+
     <hr>
   </body>
 </html>
