@@ -14,6 +14,7 @@ AC_CANONICAL_SYSTEM
 AC_C_CONST
 AC_C_INLINE
 
+CFLAGS=""
 
 dnl Checks for libraries.
 
@@ -261,6 +262,16 @@ if [ -d /usr/5lib ] ; then
 fi
 
 ]
+
+AC_ARG_ENABLE(debug,
+AS_HELP_STRING([--enable-debug],
+               [enable debugging, default: no]),
+[case "${enableval}" in
+             yes) debug=true  ; CFLAGS="$CFLAGS -g -O0" ; LDFLAGS="$LDFLAGS -g" ;;
+             no)  debug=false ; CFLAGS="$CFLAGS -O6"    ; LDFLAGS="$LDFLAGS -s" ;;
+             *)   AC_MSG_ERROR([bad value ${enableval} for --enable-debug]) ;;
+esac],
+[debug=false ; CFLAGS="$CFLAGS -O6"    ; LDFLAGS="$LDFLAGS -s"])
 
 AC_SUBST(extraincludedir)
 AC_SUBST(extralibdir)

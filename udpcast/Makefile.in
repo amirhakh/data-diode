@@ -30,9 +30,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 
 # For additional warnings & checks, add -Wstrict-prototypes -Wshadow to the
 # following:
-CFLAGS +=-Wall -DBB_FEATURE_UDPCAST_FEC -D_FILE_OFFSET_BITS=64 -DUSE_SYSLOG -DUSE_ASSEMBLER -O6
-LDFLAGS +=-s
-LIBS +=@LIBS@
+CFLAGS +=-DBB_FEATURE_UDPCAST_FEC -D_FILE_OFFSET_BITS=64 -DUSE_SYSLOG -DUSE_ASSEMBLER
 
 BUSYBOX=../udp-busybox/busybox
 BBTARGET=$(BUSYBOX)/udpcast
