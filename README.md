@@ -9,7 +9,6 @@ This project improve [data-diode](https://github.com/wavestone-cdt/dyode) projec
 
 ## Bug
 
-* directory file transfer (replace pyinotify for recursive)
 * sync send and receive step delay
 
 ## TODO
@@ -24,4 +23,5 @@ This project improve [data-diode](https://github.com/wavestone-cdt/dyode) projec
 * domain access manager for users
 * append new manifest to previous file list
 * add nexus repository (with update core image)
-* add **rate-limit** to udp-redirect
+* add **rate-limit** and **drop-rate** to udp-redirect
+* add **multicast group** support for udp-redirect
