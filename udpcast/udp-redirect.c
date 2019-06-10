@@ -42,7 +42,7 @@ void usage(const char * program_path)
 {
     printf("Usage: %s recv-ip:port [dest-ip[:port]]\n", program_path);
     printf("Usage: %s recv-ip:port send-ip:port [dest-ip[:port]]\n", program_path);
-    printf("Usage: %s -r rcv-ip:port [-s send-ip[:send-port]] [-d dest-ip[:dest-port]]\n", program_path);
+    printf("Usage: %s -r recv-ip:port [-s send-ip[:send-port]] [-d dest-ip[:dest-port]]\n", program_path);
     printf("Usage: %s recv-ip port  # can seprate ip port\n", program_path);
     exit(EXIT_FAILURE);
 }
@@ -187,16 +187,6 @@ int main(int argc, char *argv[])
     }
     else
         dest_sockaddr = recv_sockaddr;
-    if (IN_MULTICAST(ntohl(dest_sockaddr.sin_addr.s_addr)))
-    {
-        int ttl = 1;
-        if (setsockopt(send_socket, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
-                       sizeof(ttl)) < 0)
-        {
-            printf("cannot set ttl = %d \n", ttl);
-            exit(EXIT_FAILURE);
-        }
-    }
 
     if(send_addr || send_port) {
         send_sockaddr.sin_family = AF_INET;
@@ -217,6 +207,16 @@ int main(int argc, char *argv[])
     }
     else
         send_sockaddr = recv_sockaddr;
+    if (IN_MULTICAST(ntohl(dest_sockaddr.sin_addr.s_addr)))
+    {
+        int ttl = 1;
+        if (setsockopt(send_socket, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
+                       sizeof(ttl)) < 0)
+        {
+            printf("cannot set ttl = %d \n", ttl);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     while(1) {
         static char buffer[65535];
