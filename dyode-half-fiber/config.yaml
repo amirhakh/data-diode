@@ -1,16 +1,25 @@
 config_name: "Data Diode"
 config_version: 1.0
-config_date: 08-08-2017
-bitrate: 900
+config_date: 06-06-2019
+
+bitrate: 900 # maximum bitrate
+multicast: # comment to disable
+  group: 255.2.2.5
 
 dyode_in:
-  ip: 10.0.0.1
-  mac: 40:16:7e:a9:fb:7a
-  interface: enp3s0
+  #external:
+  #  ip: 192.168.1.2 # use for udp-redirect. comment for listen on all ip range (equal to ip 0.0.0.0)
+  internal:
+    ip: 10.0.0.1
+    mac: 40:16:7e:a9:fb:7a
+    interface: enp3s0
 dyode_out:
-  ip: 10.0.0.2
-  mac: 40:16:7e:a9:fc:0f
-  interface: enp3s0
+  #external:
+  #  ip: 192.168.1.2
+  internal:
+    ip: 10.0.0.2
+    mac: 40:16:7e:a9:fc:0f
+    interface: enp3s0
 
 modules:
   diode_1:
@@ -18,11 +27,11 @@ modules:
     port: 9700
     bitrate: 300 # in Mb/s
     timeout: 10  # in second
-    fec: "4x4"
+    fec: "4x4"   # forward error correction
     in: /data/diode
     out: /data/diode
     temp: /data/temp
-  repo_diode:
+  repository_diode:
     type: folder
     port: 9600
     bitrate: 300
@@ -32,7 +41,11 @@ modules:
     out: /data/repo
     temp: /data/temp
   syslog_1:
-    type: syslog
-    src_port: 514 # check for user access
-    dst_ip: 1.2.3.4
-    dst_port: 514
+    type: udp-redirect
+    port: 514     # use instate all port
+    # port:
+      #src: 514 # check for user access
+      #int: 514 # internal port, if not present use src_port
+      #dst: 514
+    listen_ip: 0.0.0.0
+    destination_ip: 1.2.3.4 # use only on dyode_out config

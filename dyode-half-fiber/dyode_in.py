@@ -44,11 +44,23 @@ def watch_folder(properties):
     asyncore.loop()
 
 
-def launch_agents(module, properties, bitrate):
+def udp_redirect(properties):
+    log.debug('Function "udp-redirect" launched with params %s: ' % properties)
+
+    listen_port = properties['port']
+    send_port = properties['port']
+    if isinstance(listen_port, dict):
+        listen_port = listen_port['src']
+        send_port = send_port['int']
+    command = 'udp-redirect -r %s:%s -d %s:%s' % (properties['listen_ip'], listen_port,
+                                                  properties['ip_out'], send_port,)
+    log.debug(command)
+    (output, err) = subprocess.Popen(shlex.split(command), shell=False, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE).communicate()
+
+
+def launch_agents(module, properties):
     log.debug(module)
-    if 'bitrate' not in properties:
-        properties['bitrate'] = bitrate
-    log.debug(properties)
     if properties['type'] == 'folder':
         log.debug('Instanciating a file transfer module :: %s' % module)
         watch_folder(properties)
@@ -58,6 +70,9 @@ def launch_agents(module, properties, bitrate):
     elif properties['type'] == 'screen':
         log.debug('Screen sharing agent : %s' % module)
         screen.watch_folder(module, properties)
+    elif properties['type'] in ['udp-redirect', 'udp_redirect']:
+        log.debug('UDP-redirect agent : %s' % module)
+        udp_redirect(properties)
 
 
 def signal_handler(sig, frame):
@@ -83,34 +98,41 @@ if __name__ == '__main__':
         elif bitrate_max <= 100:
             MAX_BITRATE = 100
 
-    # Static ARP
-    log.info('Dyode input ip : %s (%s) on %s' %
-             (config['dyode_in']['ip'], config['dyode_in']['mac'], config['dyode_in']['interface']))
-    log.info('Dyode output ip : %s (%s)' % (config['dyode_out']['ip'], config['dyode_out']['mac']))
-    # p = subprocess.Popen(shlex.split('arp -s ' + config['dyode_out']['ip'] + ' ' + config['dyode_out']['mac']),
-    #                      shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    # ip address add 10.0.0.1/28 dev eth1
-    output, err = subprocess.Popen(
-        shlex.split('arp -s ' + config['dyode_out']['ip'] + ' ' + config['dyode_out']['mac']),
-        shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    if 'multicast' not in config or 'group' not in config['multicast']:
+        output, err = subprocess.Popen(
+            shlex.split(
+                'arp -s ' + config['dyode_out']['internal']['ip'] + ' ' + config['dyode_out']['internal']['mac']),
+            shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
-    # Number of modules (needed to calculate bitrate)
-    # Only works for file transfer using udpcast
-    # TODO : Screen sharing needs more bandwidth
-    # TODO : Needs to be updated for socket transfer
     modules_nb = len((config['modules']))
     log.debug('Number of modules : %s' % len(config['modules']))
     bitrate = floor(MAX_BITRATE / modules_nb)
-    log.debug('Max bitrate per module : %s mbps' % bitrate)
+    log.debug('Max bitrate per module : %s mbps' % MAX_BITRATE)
 
     # Iterate on modules
     modules = config.get('modules')
+    modules_nb_bitrate = 0
     for module, properties in modules.iteritems():
-        properties['ip_out'] = config['dyode_out']['ip']
-        properties['interface_in'] = config['dyode_in']['interface']
+        if 'bitrate' in properties:
+            MAX_BITRATE = MAX_BITRATE - properties['bitrate']
+        else:
+            modules_nb_bitrate = modules_nb_bitrate + 1
+    if MAX_BITRATE < 0:
+        log.error('Sum of bitrate is bigger than the maximum defined !')
+        exit(1)
+    for module, properties in modules.iteritems():
+        if 'multicast' in config and 'group' in config['multicast']:
+            properties['ip_multicast'] = True
+            properties['ip_out'] = config['multicast']['group']
+        else:
+            properties['ip_out'] = config['dyode_out']['internal']['ip']
+        if 'interface' in config['dyode_in']:
+            properties['interface_in'] = config['dyode_in']['internal']['interface']
+        if 'bitrate' not in properties:
+            properties['bitrate'] = MAX_BITRATE / modules_nb_bitrate
         log.debug('Parsing %s' % module)
         log.debug('Trying to launch a new process for module %s' % module)
-        p = multiprocessing.Process(name=str(module), target=launch_agents, args=(module, properties, bitrate))
+        p = multiprocessing.Process(name=str(module), target=launch_agents, args=(module, properties))
         p.start()
 
     # TODO : Check if all modules are still alive and restart the ones that are not
