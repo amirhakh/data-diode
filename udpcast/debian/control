@@ -1,7 +1,7 @@
 Source: udpcast
 Section: utils
 Priority: optional
-Maintainer: Alain Knaff <alain@knaff.lu>
+Maintainer: Amir Haji Ali Khamseh'i <amirhakh@gmail.com>
 Build-Depends: debhelper (>> 7.0.50~), m4
 Standards-Version: 3.8.4
 Homepage: http://www.udpcast.linux.lu/

@@ -146,4 +146,7 @@ $(BBTARGET)/Config.in: Config.in
 bb: bbcopy
 	make -C $(BUSYBOX)
 
+package:
+	dpkg-buildpackage -b -rfakeroot -us -uc
+
 .PHONY: manpages uninstall

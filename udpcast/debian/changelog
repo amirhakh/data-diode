@@ -1,3 +1,9 @@
+udpcast (20190610) stable; urgency=low
+
+  * Update code to support transfer file size > 2G
+  * Add udp-redirect app
+
+ -- Amir Haji Ali Khamsehi <amirhakh@gmail.com>  Mon, 10 Jun 2019 14:52:17 +0430
 udpcast (20120424) stable; urgency=low
 
   * In receiver, return correct status if pipe fails

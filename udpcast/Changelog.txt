@@ -1,3 +1,8 @@
+v20190610
+	* Update code to support transfer file size > 2G
+	* Add udp-redirect app
+
+
 v20120424
 	* In receiver, return correct status if pipe fails
 	* By default, use nosync, even on device files

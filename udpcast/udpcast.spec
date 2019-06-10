@@ -3,7 +3,7 @@
 %global _source_filedigest_algorithm 1
 Name:           udpcast
 Summary:        UDP broadcast file distribution and installation
-Version:        20120424
+Version:        20190610
 Release:        1
 License:        GPLv2+ and BSD
 Group:          Applications/System
@@ -48,13 +48,18 @@ make install
 %defattr(-,root,root)
 %{_sbindir}/udp-sender
 %{_sbindir}/udp-receiver
+%{_sbindir}/udp-redirect
 %{_mandir}/man1/udp-sender.1.gz
 %{_mandir}/man1/udp-receiver.1.gz
+%{_mandir}/man1/udp-redirect.1.gz
 %{_includedir}/udpcast/rateGovernor.h
 %doc Changelog.txt cmd.html COPYING
 
 
 %changelog
+* Mon Jun 10 2019 Amir Haji Ali Khamseh'i <amirhakh@gmail.com>
+- Update code to support transfer file size > 2G
+- Add udp-redirect app
 * Tue Apr 24 2012 Alain Knaff <alain@knaff.lu>
 - In receiver, return correct status if pipe fails
 - By default, use nosync, even on device files
