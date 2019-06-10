@@ -3,7 +3,7 @@ define(`UDPREDIRECT',`
 <!-- =section udp-redirect NAME -->
 <!-- =text udp-redirect - redirect UDP packet on a LAN -->
 <!-- =section udp-redirect AUTHOR -->
-<!-- =text Ivan Tikhonov -->
+<!-- =text Amir Haji Ali Khamseh'i -->
 <!-- =section udp-redirect SYNOPSIS -->
 <!-- =text
 udp-redirect -r <i>rcv-ip:port</i> [-s <i>send-ip</i>[:<i>send-port</i>]] [-d <i>dest-ip</i>[:<i>dest-port</i>]]
