@@ -47,11 +47,6 @@
 
 #include <linux/types.h>
 
-typedef unsigned long long u64;
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
-
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
 
@@ -204,7 +199,7 @@ int makeSockAddr(char *hostname, unsigned short port, struct sockaddr_in *addr)
 
         inaddr = host->h_addr_list[0];
         len = host->h_length;
-        memcpy((void *)&((struct sockaddr_in *)addr)->sin_addr, inaddr, len);
+        memcpy((void *)&((struct sockaddr_in *)addr)->sin_addr, inaddr, (size_t)len);
     }
 
     ((struct sockaddr_in *)addr)->sin_family = AF_INET;
@@ -625,7 +620,7 @@ net_if_t *getNetIf(const char *wanted)
     int lastGoodness = 0;
     struct in_addr wantedAddress;
     int isAddress = 0;
-    int wantedLen = 0;
+    size_t wantedLen = 0;
     net_if_t *net_if;
 
     if (wanted == NULL)
@@ -658,7 +653,7 @@ net_if_t *getNetIf(const char *wanted)
     while (1)
     {
         int len = ifc.ifc_len;
-        ifc.ifc_buf = (caddr_t)malloc(ifc.ifc_len);
+        ifc.ifc_buf = (caddr_t)malloc((size_t)ifc.ifc_len);
         if (ifc.ifc_buf == NULL)
         {
             udpc_fatal(1, "Out of memory error");

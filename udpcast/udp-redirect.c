@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 void usage(const char * program_path)
 {
@@ -154,7 +155,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* At least on Linux the obnoxious IP_MULTICAST_ALL flag is set by default */
-//	int opt = 0;
+    opt = 0;
     setsockopt(recv_socket, IPPROTO_IP, IP_MULTICAST_ALL, &opt, sizeof(opt));
 
     struct sockaddr_in recv_sockaddr, send_sockaddr, dest_sockaddr, src_sockaddr;
@@ -165,6 +166,19 @@ int main(int argc, char *argv[])
         printf("Can't bind our address (%s:%s)\n", recv_addr, recv_port);
         exit(EXIT_FAILURE);
     }
+    if (IN_MULTICAST(ntohl(recv_sockaddr.sin_addr.s_addr)))
+    {
+        struct ip_mreq mreq;
+        mreq.imr_multiaddr.s_addr = recv_sockaddr.sin_addr.s_addr;
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+        if ( setsockopt(recv_socket, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                        (void *)&mreq,
+                        sizeof(mreq)) < 0)
+        {
+            printf("cannot join multicast group '%s'", inet_ntoa(mreq.imr_multiaddr));
+            exit(EXIT_FAILURE);
+        }
+    }
 
     if(dest_addr || dest_port) {
         dest_sockaddr.sin_family = AF_INET;
@@ -173,6 +187,16 @@ int main(int argc, char *argv[])
     }
     else
         dest_sockaddr = recv_sockaddr;
+    if (IN_MULTICAST(ntohl(dest_sockaddr.sin_addr.s_addr)))
+    {
+        int ttl = 1;
+        if (setsockopt(send_socket, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
+                       sizeof(ttl)) < 0)
+        {
+            printf("cannot set ttl = %d \n", ttl);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     if(send_addr || send_port) {
         send_sockaddr.sin_family = AF_INET;

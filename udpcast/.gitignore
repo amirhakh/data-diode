@@ -1,3 +1,7 @@
+Makefile
+config.h
+config.status
+config.log
 autom4te.cache/*
 udp-receiver
 udp-receiver.1
