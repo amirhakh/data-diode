@@ -34,7 +34,7 @@ def watch_folder(properties):
     log.debug('Function "folder" launched with params %s: ' % properties)
 
     # inotify kernel watchdog stuff
-    excl_lst = ['.*\.tmp']
+    excl_lst = ['^/.*\\.tmp$']
     excl = pyinotify.ExcludeFilter(excl_lst)
     wm = pyinotify.WatchManager()
     mask = pyinotify.IN_CLOSE_WRITE
@@ -126,8 +126,7 @@ if __name__ == '__main__':
             properties['ip_out'] = config['multicast']['group']
         else:
             properties['ip_out'] = config['dyode_out']['internal']['ip']
-        if 'interface' in config['dyode_in']:
-            properties['interface_in'] = config['dyode_in']['internal']['interface']
+        properties['interface_in'] = config['dyode_in']['internal']['interface']
         if 'bitrate' not in properties:
             properties['bitrate'] = MAX_BITRATE / modules_nb_bitrate
         log.debug('Parsing %s' % module)
