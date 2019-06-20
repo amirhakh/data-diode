@@ -13,6 +13,7 @@ This project improve [data-diode](https://github.com/wavestone-cdt/dyode) projec
 
 ## TODO
 
+* log of file transferred (with log rotate)
 * migrate to python 3
 * one port for sync and some command
 * error log file
