@@ -1,0 +1,14 @@
+[Unit]
+Description=ClamAV virus database updater
+ConditionPathExists=/opt/backup/diode.service.sh
+After=syslog.target network.target docker.service
+Wants=docker.service
+
+[Service]
+EnvironmentFile=/opt/backup/env
+ExecStart=/opt/backup/diode.service.sh
+StandardOutput=syslog
+
+[Install]
+Alias=diode
+WantedBy=multi-user.target

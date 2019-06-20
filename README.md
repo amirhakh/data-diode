@@ -13,6 +13,7 @@ This project improve [data-diode](https://github.com/wavestone-cdt/dyode) projec
 
 ## TODO
 
+* setup udpcast and auto install 
 * log of file transferred (with log rotate)
 * migrate to python 3
 * one port for sync and some command
@@ -23,6 +24,4 @@ This project improve [data-diode](https://github.com/wavestone-cdt/dyode) projec
 * file access: FTP, SFTP, web, ...
 * domain access manager for users
 * append new manifest to previous file list
-* add nexus repository (with update core image)
 * add **rate-limit** and **drop-rate** to udp-redirect
-* add **multicast group** support for udp-redirect

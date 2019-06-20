@@ -1,14 +1,18 @@
 #!/usr/bin/env sh
 
+user=diode
 data_path=/data
 mkdir ${data_path}
 
-useradd -M -d ${data_path}/diode -s /usr/sbin/nologin -G sambashare diode
-echo -ne "DataDiode\nDataDiode\n" | passwd diode
+useradd -M -d ${data_path}/$user -s /usr/sbin/nologin $user
+echo -ne "DataDiode\nDataDiode\n" | passwd $user
 
-mkdir ${data_path}/diode
+mkdir ${data_path}/$user
 mkdir ${data_path}/temp
-chown diode -R ${data_path}
+chown $user -R ${data_path}
 
 ./setup-smb.sh
+# TODO: ./setup-updcast.sh
 ./setup-dyode.sh
+./setup-docker.sh
+./setup-nexus-oss.sh

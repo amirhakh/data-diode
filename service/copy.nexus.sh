@@ -1,7 +1,9 @@
 #!/bin/sh
 
-inputdir="/mnt/hard/nexus-data"
-outputdir="/var/lib/docker/volumes/nexus-data/_data"
+CONTAINER=nexus
+nexusdata="/data/nexus-data/"
+nexustemp="/data/nexus-temp/"
+outputdir="/data/repo/"
 
 copy(){
     docker stop nexus
@@ -28,26 +30,30 @@ duplicity --no-compress --no-encryption \
 }
 
 rsync-diff-tar() {
-    # tf=$(tempfile)
     # full/incremental tag ?
     idir=$1
-    odir=$2
+    tdir=$2
+    odir=$3
     archive=$(tempfile)
-    [ -d "$odir" ] || mkdir -p $odir
-    cd ${odir}
     list=${idir}/change-file.list
+    outar=${odir}-$(date +"%Y%m%d-%I%M").tar
+
+    [ -d "$tdir" ] || mkdir -p $tdir
+    cd ${tdir}
     [ -f "${list}" ] && rm -f ${list}
-    rsync -Warv --delete --exclude='tmp' --exclude='log' --exclude='cache'  $idir/* $odir/ |
+
+    rsync -Warv --delete --exclude='tmp' --exclude='log' --exclude='cache'  $idir/* $tdir/ |
     tail -n +2 |
     head -n -3 > ${list}
-    cp ${idir}/change-file.list ${odir}/change-file.list
+    
+    cp ${idir}/change-file.list ${tdir}/change-file.list
     grep -v -e '^deleting ' -e '/$' ${list} > $archive
-    outar=${odir}-$(date +"%Y%m%d-%I%M").tar
+
     tar -cf ${outar} -T ${archive} change-file.list
+
     echo ${outar}
     rm $archive
     cd - > /dev/null
-# TODO: check for full or incremental
 }
 
 rsync-diff-untar() {
@@ -70,12 +76,13 @@ if [[ "$type" == "input" ]]; then
   while true
   do
     sleep 20
-    test_run=$(rsync -Warvn --delete --exclude='tmp' --exclude='log' --exclude='cache'  $inputdir/* $outputdir/)
+    test_run=$(rsync -Warvn --delete --exclude='tmp' --exclude='log' --exclude='cache'  $nexusdata/* $nexustemp/)
     blobs=$(echo "$test_run" | grep ^blobs/ -c)
     if [ "$blobs" -gt 0 ]; then
       if [ "$last_blobs" = "$blobs" ]; then
-        docker puase
-        rsync-diff-tar $inputdir $outputdir
+        docker puase $CONTAINER
+        rsync-diff-tar $nexusdata $nexustemp $outputdir
+        docker unpuase $CONTAINER
       else
         last_blobs="$blobs"
         continue
@@ -91,7 +98,9 @@ elif [[ "$type" == "output" ]]; then
 
     if [ "$blobs" -gt 0 ]; then
       if [ "$last_blobs" = "$blobs" ]; then
+        docker stop $CONTAINER
         rsync-diff-untar
+        docker start $CONTAINER
       else
         last_blobs="$blobs"
         continue
