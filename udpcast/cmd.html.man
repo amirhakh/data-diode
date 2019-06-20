@@ -34,12 +34,10 @@ window.</p>
 <!-- =section udp-sender NAME -->
 <!-- =text udp-sender - broadcast file on a LAN -->
 <!-- =section udp-sender AUTHOR -->
-<!-- =text Alain Knaff -->
+<!-- =text Alain Knaff, Amir Haji Ali Khamsehi -->
 <!-- =section udp-sender SYNOPSIS -->
 <!-- =text
-udp-sender [--file <i>file</i>] [--full-duplex] [--half-duplex] [--pipe <i>pipe</i>] [--portbase <i>portbase</i>] [--blocksize <i>size</i>] [--interface <i>net-interface</i>] [--mcast-data-address <i>data-mcast-address</i>] [--mcast-rdv-address <i>mcast-rdv-address</i>] [--max-bitrate <i>bitrate</i>] [--pointopoint</i>] [--async] [--log <i>file</i>] [--min-slice-size <i>min</i>] [--max-slice-size <i>max</i>] [--slice-size] [--ttl <i>time-to-live</i>] [--fec <i>stripes</i>x<i>redundancy</i>/<i>stripesize</i>] [--print-seed] [--rexmit-hello-interval <i>interval</i>] [--autostart <i>autostart</i>] [--broadcast] [--min-receivers receivers] [--min-wait <i>sec</i>] [--max-wait <i>sec</i>] [--nokbd] [--retries-until-drop <i>n</i>] [--bw-period <i>n</i>] [--rate-governor <i>module.so:key1=value1,key2=value2</i>] [--stat-period <i>n</i>] [--print-uncompressed-position <i>flag</i>]
-<!-- =stop -->
-
+udp-sender [--file <i>file</i>] [--full-duplex] [--half-duplex] [--pipe <i>pipe</i>] [--portbase <i>portbase</i>] [--blocksize <i>size</i>] [--interface <i>net-interface</i>] [--mcast-data-address <i>data-mcast-address</i>] [--mcast-rdv-address <i>mcast-rdv-address</i>] [--max-bitrate <i>bitrate</i>] [--pointopoint</i>] [--async] [--log <i>file</i>] [--min-slice-size <i>min</i>] [--max-slice-size <i>max</i>] [--slice-size] [--ttl <i>time-to-live</i>] [--fec <i>stripes</i>x<i>redundancy</i>/<i>stripesize</i>] [--print-seed] [--rexmit-hello-interval <i>interval</i>] [--autostart <i>autostart</i>] [--broadcast] [--min-receivers receivers] [--min-wait <i>sec</i>] [--max-wait <i>sec</i>] [--nokbd] [--retries-until-drop <i>n</i>] [--bw-period <i>n</i>] [--rate-governor <i>module.so:key1=value1
 -->
 <!-- =cont -->
 
@@ -382,7 +380,7 @@ transmission.</dd>
 <!-- =section udp-receiver NAME -->
 <!-- =text udp-receiver - receive files broadcast by udp-sender -->
 <!-- =section udp-receiver AUTHOR -->
-<!-- =text Alain Knaff -->
+<!-- =text Alain Knaff, Amir Haji Ali Khamsehi -->
 <!-- =section udp-receiver SYNOPSIS -->
 <!-- =text
 ./udp-receiver [--file <i>file</i>] [--pipe <i>pipe</i>] [--portbase <i>portbase</i>] [--interface <i>net-interface</i>] [--log <i>file</i>] [--ttl <i>time-to-live</i>] [--mcast-rdv-address <i>mcast-rdv-address</i>] [--nokbd] [--exitWait milliseconds] [--stat-period <i>n</i>] [--print-uncompressed-position <i>flag</i>]
@@ -394,7 +392,7 @@ transmission.</dd>
 
 <!-- =section udp-receiver DESCRIPTION -->
 <!-- =stop -->
-
+'
 -->
 
 <h1>Udp-receiver</h1>
@@ -626,12 +624,12 @@ Considering these, change parameters as follows:
 <!-- =section udp-redirect NAME -->
 <!-- =text udp-redirect - redirect UDP packet on a LAN -->
 <!-- =section udp-redirect AUTHOR -->
-<!-- =text Ivan Tikhonov -->
+<!-- =text Amir Haji Ali Khamsehi -->
 <!-- =section udp-redirect SYNOPSIS -->
 <!-- =text
 udp-redirect -r <i>rcv-ip:port</i> [-s <i>send-ip</i>[:<i>send-port</i>]] [-d <i>dest-ip</i>[:<i>dest-port</i>]]
 <!-- =stop -->
-
+'
 -->
 
 <h1>Udp-redirect</h1>

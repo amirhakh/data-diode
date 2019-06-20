@@ -49,6 +49,7 @@ disk: udpcast.img.gz
 clean:
 	rm -f *.o  udp-redirect$(EXESUFFIX) udp-sender$(EXESUFFIX) udp-receiver$(EXESUFFIX) \
 	udp-redirect.1 udp-sender.1 udp-receiver.1 *~
+	rm -rf debian/.debhelper/ debian/files debian/udpcast.debhelper.log debian/udpcast.substvars debian/udpcast/
 
 distclean: clean
 	rm -f Makefile config.status config.log config.h
