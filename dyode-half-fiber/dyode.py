@@ -160,7 +160,7 @@ def send_file(file_path, interface, ip_out, port_base, max_bitrate):
 # List all files recursively
 def list_all_files(root_dir):
     files = []
-    dirs = [root_dir]
+    dirs = []  # [root_dir]
     for root, directories, filenames in os.walk(root_dir):
         for directory in directories:
             dirs.append(os.path.join(root, directory))
