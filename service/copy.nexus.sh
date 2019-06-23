@@ -20,12 +20,12 @@ inoty(){
 
 duplicity-bk(){
 duplicity --no-compress --no-encryption  \
-    --exclude='/mnt/hard/nexus-data/tmp' \
-    --exclude='/mnt/hard/nexus-data/log' \
-    --exclude='/mnt/hard/nexus-data/cache' \
-    /mnt/hard/nexus-data/ file:///tmp/nxd-dup
+    --exclude=$nexusdata'/tmp' \
+    --exclude=$nexusdata'/log' \
+    --exclude=$nexusdata'/cache' \
+    $nexusdata file://$nexustemp
 duplicity --no-compress --no-encryption \
-    file:///tmp/nxd-dup/ /var/lib/docker/volumes/nexus-data/_data/
+    file://$nexustemp $outputdir
 
 }
 
