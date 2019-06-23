@@ -26,7 +26,7 @@ log.setLevel(logging.DEBUG)
 ######################## Reception specific functions ##########################
 
 def parse_manifest(file_path):
-    log.error("config file:" + file_path)
+    log.debug("config file:" + file_path)
     files = []
     dirs = []
     with open(file_path, 'r') as config_file:
@@ -183,6 +183,9 @@ def write_manifest(dirs, files, files_hash, manifest_filename, root, new):
 
 def file_copy(params):
     # TODO: send existing file (startup service) : not open
+    delete = True
+    if 'delete' in params and params['delete'] == 'no':
+        delete = False
     log.debug('Local copy starting ... with params :: %s', params)
 
     dirs, files = list_all_files(params[1]['in'])
@@ -217,13 +220,15 @@ def file_copy(params):
                   params[1]['port'],
                   params[1]['bitrate'])
         log.info('Deleting: ' + f)
-        os.remove(f)
-    for d in dirs:
-        log.info('Deleting Dir: ' + d)
-        try:
-            os.rmdir(d)
-        except:
-            pass
+        if delete:
+            os.remove(f)
+    if delete:
+        for d in dirs:
+            log.info('Deleting Dir: ' + d)
+            try:
+                os.rmdir(d)
+            except:
+                pass
 
 
 ########################### Shared functions ###################################
