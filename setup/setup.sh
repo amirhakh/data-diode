@@ -13,6 +13,7 @@ chown $user -R ${data_path}
 
 ./setup-smb.sh
 # TODO: ./setup-updcast.sh
+# TODO: setup ip & interfaces
 ./setup-dyode.sh
 ./setup-docker.sh
 ./setup-nexus-oss.sh

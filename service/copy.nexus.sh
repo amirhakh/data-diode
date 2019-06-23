@@ -1,113 +1,133 @@
 #!/bin/sh
 
+instruction=$1
+
 CONTAINER=nexus
-nexusdata="/data/nexus-data/"
-nexustemp="/data/nexus-temp/"
+CONTAINER_PORT=8081
+nexusdata="/data/$CONTAINER-data/"
+nexustemp="/data/$CONTAINER-temp/"
 outputdir="/data/repo/"
+log_file="$outputdir/$CONTAINER.log"
 
-copy(){
-    docker stop nexus
-    rsync -WarvP --delete --exclude='tmp' --exclude='log' --exclude='cache'  $idir/* $odir/
-    docker start nexus
+# TODO: weekly delete
+
+
+rsync_diff_tar() {
+  archive=$(tempfile)
+  list="${nexusdata}/change-file.list"
+  tar_date=$(date +"%Y%m%d-%I%M")
+  prev_tar_date=$(tail -1 "$log_file" | cut -d' ' -f1)
+  [ "$prev_tar_date" == "" ] && prev_tar_date="0"
+  outar="${outputdir}/$CONTAINER""_$prev_tar_date-$tar_date.tar"
+
+  [ -d "$nexustemp" ] || mkdir -p $nexustemp
+  cd ${nexustemp}
+  [ -f "${list}" ] && rm -f ${list}
+
+  rsync -Warv --delete --exclude='tmp' --exclude='log' --exclude='cache'  "$nexusdata"/* $nexustemp/ |
+  tail -n +2 |
+  head -n -3 > "${list}"
+  
+  cp "${nexusdata}/change-file.list" "${nexustemp}/change-file.list"
+  grep -v -e '^deleting ' -e '/$' "${list}" > "$archive"
+
+  tar -cf "${outar}" -T "${archive}" change-file.list
+  echo "$tar_date" "$outar" >> "$log_file"
+
+  echo "${outar}"
+  rm "$archive"
+  cd - > /dev/null
 }
 
-inoty(){
-  while inotifywait -r -e modify,create,delete $1
-  do
-    rsync -War $1/ $2
-  done
+rsync_diff_untar() {
+  ifile=$1
+  odir=$2
+  [ -d "$nexusdata" ] || mkdir -p $nexusdata
+  cd $nexusdata
+  list=${nexusdata}/change-file.list
+  tar -xf $ifile
+  for i in $(grep -e '^deleting ' $list); do [ -f $i ] && rm -f $i || rmdir $i; done
+  cd - > /dev/null
 }
 
-duplicity-bk(){
-duplicity --no-compress --no-encryption  \
-    --exclude=$nexusdata'/tmp' \
-    --exclude=$nexusdata'/log' \
-    --exclude=$nexusdata'/cache' \
-    $nexusdata file://$nexustemp
-duplicity --no-compress --no-encryption \
-    file://$nexustemp $outputdir
-
-}
-
-rsync-diff-tar() {
-    # full/incremental tag ?
-    idir=$1
-    tdir=$2
-    odir=$3
-    archive=$(tempfile)
-    list=${idir}/change-file.list
-    outar=${odir}-$(date +"%Y%m%d-%I%M").tar
-
-    [ -d "$tdir" ] || mkdir -p $tdir
-    cd ${tdir}
-    [ -f "${list}" ] && rm -f ${list}
-
-    rsync -Warv --delete --exclude='tmp' --exclude='log' --exclude='cache'  $idir/* $tdir/ |
-    tail -n +2 |
-    head -n -3 > ${list}
-    
-    cp ${idir}/change-file.list ${tdir}/change-file.list
-    grep -v -e '^deleting ' -e '/$' ${list} > $archive
-
-    tar -cf ${outar} -T ${archive} change-file.list
-
-    echo ${outar}
-    rm $archive
-    cd - > /dev/null
-}
-
-rsync-diff-untar() {
-    ifile=$1
-    odir=$2
-    [ -d "$odir" ] || mkdir -p $odir
-    cd $odir
-    list=${odir}/change-file.list
-    tar -xf $ifile
-    for i in $(grep -e '^deleting ' $list); do [ -f $i ] && rm -f $i || rmdir $i; done
-    cd -
-}
-
-
-rsync-diff-tar
-
-if [[ "$type" == "input" ]]; then
-
+check_copy_loop() {
   last_blobs=0
   while true
   do
     sleep 20
-    test_run=$(rsync -Warvn --delete --exclude='tmp' --exclude='log' --exclude='cache'  $nexusdata/* $nexustemp/)
+    test_run=$(rsync -Warvn --delete --exclude='tmp' --exclude='log' --exclude='cache'  "$nexusdata"/* "$nexustemp"/)
     blobs=$(echo "$test_run" | grep ^blobs/ -c)
     if [ "$blobs" -gt 0 ]; then
       if [ "$last_blobs" = "$blobs" ]; then
-        docker puase $CONTAINER
-        rsync-diff-tar $nexusdata $nexustemp $outputdir
-        docker unpuase $CONTAINER
+        docker pause $CONTAINER
+        rsync_diff_tar
+        docker unpause $CONTAINER
       else
         last_blobs="$blobs"
         continue
       fi
     fi
   done
-elif [[ "$type" == "output" ]]; then
+}
 
-  last_blobs=0
+check_extract_loop() {
+  last_count=0
+  last_date=$(cat "$nexusdata/last_date")
+  [ "$last_date" == "" ] && last_date=0
   while true
   do
-    sleep 10
-
-    if [ "$blobs" -gt 0 ]; then
-      if [ "$last_blobs" = "$blobs" ]; then
+    sleep 15
+    file_list=$(ls "$outputdir/$CONTAINER"_* | sort)
+    count=$(echo "$file_list" | wc -l)
+    if [ "$count" -gt 0 ]; then
+      if [ "$last_count" = "$count" ]; then
         docker stop $CONTAINER
-        rsync-diff-untar
+        for f in file_list; do
+          if $(echo "$f" | grep _"$last_date"-); then
+            rsync_diff_untar "$f"
+            rm -f $f
+            last_date=$(echo "$f" | rev | cut -d- -f1 | rev | cut -d. -f1)
+          else
+            echo "Error: date sequence not match"
+            break
+          fi
+        done
         docker start $CONTAINER
+        # 1 minute delay
       else
-        last_blobs="$blobs"
+        last_count="$count"
         continue
       fi
     fi
   done
+}
 
-fi
+case "$instruction" in
+  "clean")
+    rm -rf "$nexustemp/"* "$outputdir/$CONTAINER"*
+  ;;
+  "distclean")
+    rm -rf "$nexustemp/"* "$outputdir/$CONTAINER"* 
+    docker rm $CONTAINER
+  ;;
+  "setup")
+    mkdir -p $nexusdata
+    mkdir -p $nexustemp
+    docker run -d --name $CONTAINER -p $CONTAINER_PORT:8081 -v "$nexusdata":/nexus-data sonatype/nexus3
+  ;;
+  "tar")
+    rsync_diff_tar
+  ;;
+  "untar")
+    rsync_diff_untar
+  ;;
+  "input")
+    rsync_diff_tar
+    check_copy_loop
+  ;;
+  "output")
+    check_extract_loop
+  ;;
+esac
 
 
