@@ -9,6 +9,9 @@ nexustemp="/data/$CONTAINER-temp/"
 outputdir="/data/repo/"
 log_file="$outputdir/$CONTAINER.log"
 
+copy_loop_time=30
+extract_loop_time=15
+
 # TODO: weekly delete
 
 
@@ -24,7 +27,7 @@ rsync_diff_tar() {
   cd ${nexustemp}
   [ -f "${list}" ] && rm -f ${list}
 
-  rsync -Warv --delete --exclude='tmp' --exclude='log' --exclude='cache'  "$nexusdata"/* $nexustemp/ |
+  rsync -Warv --delete --exclude='tmp' --exclude='log' "$nexusdata"/* $nexustemp/ |
   tail -n +2 |
   head -n -3 > "${list}"
   
@@ -46,7 +49,7 @@ rsync_diff_untar() {
   cd $nexusdata
   list=${nexusdata}/change-file.list
   tar -xf $ifile
-  for i in $(grep -e '^deleting ' $list); do [ -f $i ] && rm -f $i || rmdir $i; done
+  grep -e '^deleting ' $list | while read file; do echo [ -f "$file" ] && rm -f "$file" || rmdir "$file"; done
   cd - > /dev/null
 }
 
@@ -54,14 +57,15 @@ check_copy_loop() {
   last_blobs=0
   while true
   do
-    sleep 20
-    test_run=$(rsync -Warvn --delete --exclude='tmp' --exclude='log' --exclude='cache'  "$nexusdata"/* "$nexustemp"/)
+    sleep $copy_loop_time
+    test_run=$(rsync -Warvn --delete --exclude='tmp' --exclude='log' "$nexusdata"/* "$nexustemp"/)
     blobs=$(echo "$test_run" | grep ^blobs/ -c)
     if [ "$blobs" -gt 0 ]; then
       if [ "$last_blobs" = "$blobs" ]; then
-        docker pause $CONTAINER
+        docker stop $CONTAINER
         rsync_diff_tar
-        docker unpause $CONTAINER
+        docker start $CONTAINER
+        last_blobs=0
       else
         last_blobs="$blobs"
         continue
@@ -76,7 +80,7 @@ check_extract_loop() {
   [ "$last_date" == "" ] && last_date=0
   while true
   do
-    sleep 15
+    sleep $extract_loop_time
     file_list=$(ls "$outputdir/$CONTAINER"_* | sort)
     count=$(echo "$file_list" | wc -l)
     if [ "$count" -gt 0 ]; then
@@ -89,10 +93,11 @@ check_extract_loop() {
             last_date=$(echo "$f" | rev | cut -d- -f1 | rev | cut -d. -f1)
           else
             echo "Error: date sequence not match"
-            break
+            exit 1
           fi
         done
         docker start $CONTAINER
+        last_count=0
         # 1 minute delay
       else
         last_count="$count"
