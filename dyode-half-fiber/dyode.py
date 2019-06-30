@@ -25,19 +25,27 @@ log.setLevel(logging.DEBUG)
 
 ######################## Reception specific functions ##########################
 
-def parse_manifest(file_path):
+def parse_manifest(file_path, in_path, out_path):
     log.debug("config file:" + file_path)
     files = []
     dirs = []
     with open(file_path, 'r') as config_file:
         try:
             data = json.load(config_file)
-
             # for file_path, file_hash in data['files']:
             #     log.debug(file_path + ' :: ' + file_hash())
             #     files[file_path] = file_hash
             files = data['files']
             dirs = data['dirs']
+            if in_path != out_path:
+                t = []
+                for f in files:
+                    t.append(out_path + os.path.relpath(f, in_path))
+                files = t
+                t = []
+                for d in dirs:
+                    t.append(out_path + os.path.relpath(d, in_path))
+                dirs = t
         except:
             pass
     return dirs, files
@@ -45,7 +53,7 @@ def parse_manifest(file_path):
 
 def check_hash_process(queue):
     while True:
-        temp_file, hash_list = queue.get()
+        temp_file, hash_list, success_log, failure_log = queue.get()
         # log.debug("check hash for :: %s at %s" % (temp_file, datetime.datetime.now()))
         if hash_list is None:
             if temp_file is None:
@@ -61,6 +69,8 @@ def check_hash_process(queue):
         h = hash_file(temp_file)
         if h not in hash_list:
             log.error('Invalid checksum for file ' + temp_file + " " + h)
+            with open(failure_log, 'ab') as f:
+                f.write(h + ' ' + temp_file + '\n')
             os.remove(temp_file)
         else:
             f = hash_list[h]
@@ -73,6 +83,8 @@ def check_hash_process(queue):
                         raise
             shutil.move(temp_file, f)
             log.info('File Available: ' + f)
+            with open(failure_log, 'ab') as f:
+                f.write(h + ' ' + f + '\n')
     queue.put(None)
 
 
@@ -117,7 +129,7 @@ def wait_for_file(queue, params):
         os.mkdir(params['temp'])
     manifest_filename = params['temp'] + '/manifest_' + process_name + '.json'
     receive_file(manifest_filename, params['interface_out'], params['ip_in'], int(params['port']) + 2)
-    dirs, files = parse_manifest(manifest_filename)
+    dirs, files = parse_manifest(manifest_filename, params['in'], params['out'] + '/')
     if len(files) == 0:
         log.error('No file listed in manifest')
         return 0
@@ -135,12 +147,13 @@ def wait_for_file(queue, params):
         receive_file(temp_file, params['interface_out'], params['ip_in'], params['port'], 10)
         log.info('File ' + temp_file + ' received at ' + str(datetime.datetime.now()))
         if os.path.exists(temp_file):
-            queue.put((temp_file, hash_list,))
+            queue.put((temp_file, hash_list,
+                       params['out'] + '/transfer_success.log',
+                       params['out'] + '/transfer_failure.log'))
 
     os.remove(manifest_filename)
     # todo: background
-    queue.put((params['temp'], None))
-
+    queue.put((params['temp'], None, None, None))
 
 
 ################### Send specific functions ####################################

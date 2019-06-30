@@ -58,5 +58,6 @@ You can take a look at the video to learn more about the usage, and ``INSTALL.md
 ## Bugs
 
 * ~~file transfer bigger than 2G~~
+* ~~move file to input path (replace `output` with `input` prefix)~~
 * transfer speed over 300 Mb/s UDP packet unordered receive
 * `udp-receiver` 1.5s delay on close (thread join and disk write)

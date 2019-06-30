@@ -5,7 +5,7 @@ This project improve [data-diode](https://github.com/wavestone-cdt/dyode) projec
 ## Future
 
 * SMB file share
-* 1G connection speed ( limit single file transfer to 300 Mb/s for os UDP packet order)
+* 1G connection speed ( limit single file transfer to 300 Mb/s for os UDP packet reorder)
 
 ## Bug
 
@@ -13,7 +13,7 @@ This project improve [data-diode](https://github.com/wavestone-cdt/dyode) projec
 
 ## TODO
 
-* setup udpcast and auto install 
+* setup udpcast and auto install
 * log of file transferred (with log rotate)
 * migrate to python 3
 * one port for sync and some command
